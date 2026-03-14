@@ -1,12 +1,23 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { DM_Serif_Display, Work_Sans } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"] });
+const dmSerif = DM_Serif_Display({
+  weight: "400",
+  subsets: ["latin"],
+  variable: "--font-display",
+  display: "swap",
+});
+
+const workSans = Work_Sans({
+  subsets: ["latin"],
+  variable: "--font-body",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
-  title: "Recettes Faciles - Qu'est-ce qu'on mange ?",
-  description: "Découvre des recettes simples et délicieuses avec ce que tu as dans le frigo",
+  title: "Cuisine à la Maison — Recettes Faciles",
+  description: "Des recettes simples et gourmandes pour cuisiner au quotidien",
 };
 
 export default function RootLayout({
@@ -15,8 +26,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr">
-      <body className={inter.className}>{children}</body>
+    <html lang="fr" className={`${dmSerif.variable} ${workSans.variable}`}>
+      <body className="antialiased bg-stone-50 text-stone-900">{children}</body>
     </html>
   );
 }
