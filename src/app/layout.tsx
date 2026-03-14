@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
+import { Inter } from "next/font/google";
 import "./globals.css";
+
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "CuisineConnect - Votre compagnon culinaire",
@@ -13,8 +16,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fr">
-      <body className="bg-cream-50 text-charcoal-800 antialiased">
-        <div className="max-w-md mx-auto min-h-screen relative bg-white">
+      <body className={`${inter.className} bg-slate-50 text-slate-800 antialiased`}>
+        <div className="max-w-md mx-auto min-h-screen relative bg-white shadow-2xl">
           {children}
         </div>
       </body>
