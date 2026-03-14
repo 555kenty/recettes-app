@@ -17,6 +17,8 @@ module.exports = {
           DEFAULT: '#f5f0e8',
           dark: '#e8e0d4',
           light: '#faf8f4',
+          50: '#FFFBF5',
+          100: '#FFF5E1',
         },
         olive: {
           DEFAULT: '#6b7c5e',
@@ -28,8 +30,21 @@ module.exports = {
           light: '#e4be6a',
           dark: '#b8922f',
         },
-        charcoal: '#2d2a26',
+        charcoal: {
+          DEFAULT: '#2d2a26',
+          800: '#2C3E50',
+          900: '#1a252f',
+        },
         stone: '#8b8680',
+        coral: {
+          50: '#fff0f0',
+          100: '#ffe1e1',
+          500: '#FF6B6B',
+          600: '#ee5a5a',
+        },
+        mint: {
+          500: '#4ECDC4',
+        },
       },
       fontFamily: {
         display: ['var(--font-display)', 'serif'],
