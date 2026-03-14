@@ -1,39 +1,119 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
   provider = "postgresql"
 }
 
-// Recettes
-model Recipe {
-  id           String   @id @default(uuid())
-  title        String
-  description  String?
-  imageUrl     String?  @map("image_url")
-  timeMinutes  Int?     @map("time_minutes")
-  difficulty   String?
-  calories     Int?
-  cuisineType  String?  @map("cuisine_type")
-  category     String?
-  ingredients  Json? // [{"name": "Pâtes", "quantity": "400g", "category": "Féculents"}]
-  steps        Json? // [{"order": 1, "description": "Faire bouillir l'eau"}]
-  tags         String[]
-  sourceApi    String?  @map("source_api")
-  sourceId     String?  @unique @map("source_id")
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+// ============================================
+// TABLES BETTERAUTH (gérées automatiquement)
+// ============================================
 
-  // Relations
-  favorites    UserFavorite[]
-  histories    UserHistory[]
-  userRecipes  UserRecipe[]
+model User {
+  id            String    @id
+  name          String
+  email         String    @unique
+  emailVerified Boolean   @map("email_verified")
+  image         String?
+  createdAt     DateTime  @map("created_at")
+  updatedAt     DateTime  @map("updated_at")
+
+  sessions  Session[]
+  accounts  Account[]
+  profile   UserProfile?
+
+  @@map("user")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime @map("expires_at")
+  token     String   @unique
+  createdAt DateTime @map("created_at")
+  updatedAt DateTime @map("updated_at")
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String    @map("account_id")
+  providerId            String    @map("provider_id")
+  userId                String    @map("user_id")
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?   @map("access_token")
+  refreshToken          String?   @map("refresh_token")
+  idToken               String?   @map("id_token")
+  accessTokenExpiresAt  DateTime? @map("access_token_expires_at")
+  refreshTokenExpiresAt DateTime? @map("refresh_token_expires_at")
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @map("created_at")
+  updatedAt             DateTime  @map("updated_at")
+
+  @@map("account")
+}
+
+model Verification {
+  id         String    @id
+  identifier String
+  value      String
+  expiresAt  DateTime  @map("expires_at")
+  createdAt  DateTime? @map("created_at")
+  updatedAt  DateTime? @map("updated_at")
+
+  @@map("verification")
+}
+
+// ============================================
+// RECETTES
+// ============================================
+
+model Recipe {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  imageUrl    String?  @map("image_url")
+  videoUrl    String?  @map("video_url")
+  timeMinutes Int?     @map("time_minutes")
+  servings    Int?
+  difficulty  String?
+  calories    Int?
+  cuisineType String?  @map("cuisine_type")
+  category    String?
+  ingredients Json?    // [{"name": "Pâtes", "quantity": "400", "unit": "g", "category": "Féculents"}]
+  steps       Json?    // [{"order": 1, "description": "...", "duration_minutes": 5, "tip": null}]
+  tags        String[]
+  isPublic    Boolean  @default(true) @map("is_public")
+  authorId    String?  @map("author_id")
+  viewCount   Int      @default(0) @map("view_count")
+  likeCount   Int      @default(0) @map("like_count")
+  language    String   @default("fr")
+  quality     Int      @default(0)   // score 0-100 rempli par IA
+  enriched    Boolean  @default(false)
+  sourceApi   String?  @map("source_api")
+  sourceId    String?  @unique @map("source_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  favorites UserFavorite[]
+  histories UserHistory[]
+  userRecipes UserRecipe[]
+  comments  RecipeComment[]
 
   @@map("recipes")
 }
 
-// Ingrédients normalisés
+// ============================================
+// INGRÉDIENTS NORMALISÉS
+// ============================================
+
 model Ingredient {
   id              String   @id @default(uuid())
   name            String   @unique
@@ -42,13 +122,71 @@ model Ingredient {
   caloriesPer100g Int?     @map("calories_per_100g")
   createdAt       DateTime @default(now()) @map("created_at")
 
-  // Relations
   pantryItems UserPantry[]
+  synonyms    IngredientSynonym[]
 
   @@map("ingredients")
 }
 
-// Favoris utilisateur
+model IngredientSynonym {
+  id           String     @id @default(uuid())
+  ingredientId String     @map("ingredient_id")
+  synonym      String     @unique
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+
+  @@map("ingredient_synonyms")
+}
+
+// ============================================
+// PROFIL UTILISATEUR (extension de User BetterAuth)
+// ============================================
+
+model UserProfile {
+  id             String   @id
+  goal           String?  // 'lose' | 'sport' | 'cook'
+  bio            String?
+  followersCount Int      @default(0) @map("followers_count")
+  followingCount Int      @default(0) @map("following_count")
+  isPublic       Boolean  @default(true) @map("is_public")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [id], references: [id], onDelete: Cascade)
+
+  @@map("user_profiles")
+}
+
+// ============================================
+// SOCIAL
+// ============================================
+
+model UserFollow {
+  id          String   @id @default(uuid())
+  followerId  String   @map("follower_id")
+  followingId String   @map("following_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@unique([followerId, followingId])
+  @@map("user_follows")
+}
+
+model RecipeComment {
+  id        String   @id @default(uuid())
+  recipeId  String   @map("recipe_id")
+  userId    String   @map("user_id")
+  content   String
+  parentId  String?  @map("parent_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  recipe Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  @@map("recipe_comments")
+}
+
+// ============================================
+// ACTIVITÉ UTILISATEUR
+// ============================================
+
 model UserFavorite {
   id        String   @id @default(uuid())
   userId    String   @map("user_id")
@@ -61,19 +199,17 @@ model UserFavorite {
   @@map("user_favorites")
 }
 
-// Historique utilisateur
 model UserHistory {
-  id        String   @id @default(uuid())
-  userId    String   @map("user_id")
-  recipeId  String   @map("recipe_id")
-  viewedAt  DateTime @default(now()) @map("viewed_at")
+  id       String   @id @default(uuid())
+  userId   String   @map("user_id")
+  recipeId String   @map("recipe_id")
+  viewedAt DateTime @default(now()) @map("viewed_at")
 
   recipe Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
 
   @@map("user_history")
 }
 
-// Recettes créées par les utilisateurs
 model UserRecipe {
   id        String   @id @default(uuid())
   userId    String   @map("user_id")
@@ -86,26 +222,17 @@ model UserRecipe {
   @@map("user_recipes")
 }
 
-// Listes de courses
-model ShoppingList {
-  id        String   @id @default(uuid())
-  userId    String   @map("user_id")
-  name      String   @default("Ma liste")
-  items     Json // [{"name": "Tomates", "checked": false, "category": "Légumes"}]
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+// ============================================
+// FRIGO & COURSES
+// ============================================
 
-  @@map("shopping_lists")
-}
-
-// Frigo utilisateur
 model UserPantry {
-  id            String    @id @default(uuid())
-  userId        String    @map("user_id")
-  ingredientId  String    @map("ingredient_id")
-  quantity      String?
-  expiryDate    DateTime? @map("expiry_date")
-  addedAt       DateTime  @default(now()) @map("added_at")
+  id           String    @id @default(uuid())
+  userId       String    @map("user_id")
+  ingredientId String    @map("ingredient_id")
+  quantity     String?
+  expiryDate   DateTime? @map("expiry_date")
+  addedAt      DateTime  @default(now()) @map("added_at")
 
   ingredient Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
 
@@ -113,14 +240,13 @@ model UserPantry {
   @@map("user_pantry")
 }
 
-// Profils utilisateurs (extension de auth.users de BetterAuth)
-model UserProfile {
-  id          String   @id
-  name        String?
-  goal        String? // 'lose', 'sport', 'cook'
-  avatarUrl   String?  @map("avatar_url")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+model ShoppingList {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  name      String   @default("Ma liste")
+  items     Json     // [{"name": "Tomates", "checked": false, "category": "Légumes"}]
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  @@map("user_profiles")
+  @@map("shopping_lists")
 }
