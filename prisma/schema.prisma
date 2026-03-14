@@ -1,0 +1,126 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Recettes
+model Recipe {
+  id           String   @id @default(uuid())
+  title        String
+  description  String?
+  imageUrl     String?  @map("image_url")
+  timeMinutes  Int?     @map("time_minutes")
+  difficulty   String?
+  calories     Int?
+  cuisineType  String?  @map("cuisine_type")
+  category     String?
+  ingredients  Json? // [{"name": "Pâtes", "quantity": "400g", "category": "Féculents"}]
+  steps        Json? // [{"order": 1, "description": "Faire bouillir l'eau"}]
+  tags         String[]
+  sourceApi    String?  @map("source_api")
+  sourceId     String?  @unique @map("source_id")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  favorites    UserFavorite[]
+  histories    UserHistory[]
+  userRecipes  UserRecipe[]
+
+  @@map("recipes")
+}
+
+// Ingrédients normalisés
+model Ingredient {
+  id              String   @id @default(uuid())
+  name            String   @unique
+  category        String?
+  imageUrl        String?  @map("image_url")
+  caloriesPer100g Int?     @map("calories_per_100g")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  // Relations
+  pantryItems UserPantry[]
+
+  @@map("ingredients")
+}
+
+// Favoris utilisateur
+model UserFavorite {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  recipeId  String   @map("recipe_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  recipe Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, recipeId])
+  @@map("user_favorites")
+}
+
+// Historique utilisateur
+model UserHistory {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  recipeId  String   @map("recipe_id")
+  viewedAt  DateTime @default(now()) @map("viewed_at")
+
+  recipe Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  @@map("user_history")
+}
+
+// Recettes créées par les utilisateurs
+model UserRecipe {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  recipeId  String   @map("recipe_id")
+  isPublic  Boolean  @default(false) @map("is_public")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  recipe Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  @@map("user_recipes")
+}
+
+// Listes de courses
+model ShoppingList {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  name      String   @default("Ma liste")
+  items     Json // [{"name": "Tomates", "checked": false, "category": "Légumes"}]
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("shopping_lists")
+}
+
+// Frigo utilisateur
+model UserPantry {
+  id            String    @id @default(uuid())
+  userId        String    @map("user_id")
+  ingredientId  String    @map("ingredient_id")
+  quantity      String?
+  expiryDate    DateTime? @map("expiry_date")
+  addedAt       DateTime  @default(now()) @map("added_at")
+
+  ingredient Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, ingredientId])
+  @@map("user_pantry")
+}
+
+// Profils utilisateurs (extension de auth.users de BetterAuth)
+model UserProfile {
+  id          String   @id
+  name        String?
+  goal        String? // 'lose', 'sport', 'cook'
+  avatarUrl   String?  @map("avatar_url")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("user_profiles")
+}
