@@ -2,9 +2,10 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
-import { Search, SlidersHorizontal, X, Sparkles, ChefHat, LayoutDashboard } from 'lucide-react';
+import { Search, SlidersHorizontal, X, Sparkles, ChefHat } from 'lucide-react';
 import { RecipeCard } from '@/app/components/RecipeCard';
 import { useSession } from '@/lib/auth-client';
+import { AppSidebar, AppMobileNav } from '@/app/components/AppNav';
 
 const CUISINES = [
   { label: 'Française', emoji: '🇫🇷' },
@@ -23,6 +24,12 @@ const CUISINES = [
 
 const DIFFICULTIES = ['Facile', 'Moyen', 'Difficile'];
 
+const GOALS: Record<string, string> = {
+  lose: 'Manger sain',
+  sport: 'Objectif sport',
+  cook: 'Cuisiner & partager',
+};
+
 interface Recipe {
   id: string;
   title: string;
@@ -39,8 +46,7 @@ interface Recipe {
   servings?: number | null;
 }
 
-export default function FeedPage() {
-  const { data: session } = useSession();
+function FeedContent() {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -93,25 +99,12 @@ export default function FeedPage() {
   const activeFiltersCount = [filters.cuisineType, filters.difficulty, search].filter(Boolean).length;
 
   return (
-    <div className="min-h-screen bg-canvas-50">
+    <>
       {/* ── Header sticky ── */}
       <div className="bg-white border-b border-canvas-200 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           {/* Top bar */}
           <div className="flex items-center gap-3 py-3">
-            <Link href="/feed" className="flex items-center gap-2 text-stone-500 hover:text-stone-800 transition-colors mr-2 flex-shrink-0">
-              <div className="w-7 h-7 bg-brand-500 rounded-lg flex items-center justify-center">
-                <ChefHat className="w-4 h-4 text-white" />
-              </div>
-              <span className="hidden sm:inline font-semibold text-stone-900 text-sm">Cuisine<span className="text-brand-500">Connect</span></span>
-            </Link>
-            {session && (
-              <Link href="/" className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-full border border-canvas-200 bg-white text-stone-600 hover:border-brand-300 hover:text-brand-500 text-xs font-medium transition-all flex-shrink-0 mr-1">
-                <LayoutDashboard className="w-3.5 h-3.5" />
-                Mon espace
-              </Link>
-            )}
-
             {/* Barre de recherche */}
             <div className="flex-1 relative">
               {aiSearch
@@ -243,6 +236,77 @@ export default function FeedPage() {
 
         <div ref={loaderRef} className="h-10" />
       </div>
+    </>
+  );
+}
+
+// ─── Standalone header for unauthenticated users ────────────────────────────
+
+function StandaloneHeader() {
+  return (
+    <div className="bg-white border-b border-canvas-200 sticky top-0 z-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+        <div className="flex items-center gap-3 py-3">
+          <Link href="/" className="flex items-center gap-2 text-stone-500 hover:text-stone-800 transition-colors mr-2 flex-shrink-0">
+            <div className="w-7 h-7 bg-brand-500 rounded-lg flex items-center justify-center">
+              <ChefHat className="w-4 h-4 text-white" />
+            </div>
+            <span className="hidden sm:inline font-semibold text-stone-900 text-sm">Cuisine<span className="text-brand-500">Connect</span></span>
+          </Link>
+          <div className="flex-1" />
+          <Link href="/login" className="text-stone-500 hover:text-stone-800 text-sm font-medium transition-colors px-3 py-1.5">
+            Se connecter
+          </Link>
+          <Link href="/register" className="btn-primary text-sm px-4 py-2">
+            Commencer
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Main feed page ────────────────────────────────────────────────────────
+
+export default function FeedPage() {
+  const { data: session, isPending } = useSession();
+  const [goalLabel, setGoalLabel] = useState('');
+
+  // Fetch goal label for AppNav if authenticated
+  useEffect(() => {
+    if (!session) return;
+    fetch(`/api/users/${session.user.id}`)
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => {
+        if (data?.user?.profile?.goal) {
+          setGoalLabel(GOALS[data.user.profile.goal] ?? '');
+        }
+      })
+      .catch(() => {});
+  }, [session]);
+
+  const userName = session?.user.name ?? 'Chef';
+
+  // Authenticated: show with sidebar layout
+  if (!isPending && session) {
+    return (
+      <div className="min-h-screen bg-canvas-50">
+        <div className="flex">
+          <AppSidebar userName={userName} goalLabel={goalLabel} />
+          <div className="flex-1 min-w-0 pb-20 lg:pb-0">
+            <FeedContent />
+          </div>
+          <AppMobileNav />
+        </div>
+      </div>
+    );
+  }
+
+  // Unauthenticated: standalone layout
+  return (
+    <div className="min-h-screen bg-canvas-50">
+      <StandaloneHeader />
+      <FeedContent />
     </div>
   );
 }
