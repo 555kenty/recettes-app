@@ -6,8 +6,20 @@ const globalForPrisma = globalThis as unknown as {
 };
 
 function createPrismaClient() {
-  const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
-  return new PrismaClient({ adapter });
+  // Vérifier que DATABASE_URL existe
+  if (!process.env.DATABASE_URL) {
+    console.error('DATABASE_URL is not defined');
+    throw new Error('DATABASE_URL is required');
+  }
+
+  const adapter = new PrismaPg({ 
+    connectionString: process.env.DATABASE_URL 
+  });
+  
+  return new PrismaClient({ 
+    adapter,
+    log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+  });
 }
 
 export const prisma = globalForPrisma.prisma ?? createPrismaClient();
