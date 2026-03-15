@@ -23,7 +23,15 @@ export const auth = betterAuth({
     provider: "postgresql",
   }),
   secret: process.env.BETTER_AUTH_SECRET!,
+  // baseURL non hardcodée — BetterAuth détecte l'origine depuis la requête entrante.
+  // Nécessaire pour que les URLs de preview Vercel fonctionnent.
   baseURL: process.env.NEXT_PUBLIC_APP_URL,
+  trustedOrigins: [
+    "http://localhost:3000",
+    "https://recettes-nine.vercel.app",
+    // Accepte toutes les preview URLs Vercel de ce projet
+    "https://*.vercel.app",
+  ],
   emailAndPassword: {
     enabled: true,
   },
