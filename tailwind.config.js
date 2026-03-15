@@ -8,23 +8,28 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        coral: {
-          50: '#fff0f0',
-          100: '#ffe1e1',
-          500: '#FF6B6B',
-          600: '#ee5a5a',
+        brand: {
+          50:  '#FFF5F0',
+          100: '#FFE4D6',
+          200: '#FFC5A8',
+          500: '#C2410C',
+          600: '#9A3412',
+          700: '#7C2D12',
         },
-        cream: {
-          50: '#FFFBF5',
-          100: '#FFF5E1',
+        canvas: {
+          50:  '#FAFAF7',
+          100: '#F2F1EC',
+          200: '#E7E5E4',
         },
-        mint: {
-          500: '#4ECDC4',
-        },
-        charcoal: {
-          800: '#2C3E50',
-          900: '#1a252f',
-        },
+      },
+      fontFamily: {
+        serif: ['Lora', 'Georgia', 'serif'],
+        sans:  ['Inter', 'system-ui', 'sans-serif'],
+      },
+      boxShadow: {
+        card:  '0 1px 3px rgb(0 0 0 / 0.06), 0 4px 12px rgb(0 0 0 / 0.04)',
+        hover: '0 8px 30px rgb(0 0 0 / 0.10), 0 2px 8px rgb(0 0 0 / 0.06)',
+        float: '0 20px 60px rgb(0 0 0 / 0.15)',
       },
     },
   },
