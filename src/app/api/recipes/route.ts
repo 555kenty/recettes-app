@@ -13,7 +13,14 @@ export async function GET(req: NextRequest) {
   const limit = Math.min(50, parseInt(searchParams.get('limit') ?? '24'));
   const skip = (page - 1) * limit;
 
+  const community = searchParams.get('community') === 'true';
+
   const where: Record<string, unknown> = { isPublic: true };
+
+  // Feed communautaire : exclure les imports en masse (TheMealDB etc.)
+  if (community) {
+    where.sourceApi = { not: 'themealdb' };
+  }
 
   if (search) {
     where.title = { contains: search, mode: 'insensitive' };

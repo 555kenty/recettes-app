@@ -6,7 +6,8 @@ export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   const authPaths = ["/login", "/register"];
-  const protectedPaths = ["/feed", "/recipes", "/u/"];
+  // Seules ces deux routes nécessitent vraiment d'être connecté
+  const protectedPaths = ["/recipes/new", "/recipes/import-url"];
 
   const isAuthPage = authPaths.some((p) => pathname.startsWith(p));
   const isProtectedPage = protectedPaths.some((p) => pathname.startsWith(p));
@@ -25,5 +26,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/login", "/register", "/feed/:path*", "/recipes/:path*", "/u/:path*"],
+  matcher: ["/login", "/register", "/recipes/new", "/recipes/import-url"],
 };

@@ -57,7 +57,7 @@ export default function FeedPage() {
       const res = await fetch(`/api/recipes/semantic-search?q=${encodeURIComponent(q)}&limit=20`);
       if (res.ok) { const data = await res.json(); setRecipes(replace ? data.recipes : (prev: Recipe[]) => [...prev, ...data.recipes]); setHasMore(false); }
     } else {
-      const params = new URLSearchParams({ page: String(p), limit: '24' });
+      const params = new URLSearchParams({ page: String(p), limit: '24', community: 'true' });
       if (q) params.set('search', q);
       if (f.cuisineType) params.set('cuisineType', f.cuisineType);
       if (f.difficulty) params.set('difficulty', f.difficulty);
