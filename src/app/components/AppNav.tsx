@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
-  ChefHat, Lightbulb, Compass, ShoppingCart, User, LogOut,
+  ChefHat, Lightbulb, Compass, ShoppingCart, User, LogOut, Users,
 } from 'lucide-react';
 import { signOut } from '@/lib/auth-client';
 
@@ -25,11 +25,12 @@ interface AppNavProps {
 // ─── Navigation items ──────────────────────────────────────────────────────
 
 const NAV_ITEMS: NavItem[] = [
-  { href: '/fridge',      label: 'Mon Frigo',    shortLabel: 'Frigo',       icon: ChefHat },
-  { href: '/suggestions', label: 'Suggestions',  shortLabel: 'Suggestions', icon: Lightbulb },
-  { href: '/feed',        label: 'Découvrir',    shortLabel: 'Découvrir',   icon: Compass },
-  { href: '/shopping',    label: 'Courses',      shortLabel: 'Courses',     icon: ShoppingCart },
-  { href: '/profile',     label: 'Profil',       shortLabel: 'Profil',      icon: User },
+  { href: '/fridge',      label: 'Mon Frigo',    shortLabel: 'Frigo',    icon: ChefHat },
+  { href: '/suggestions', label: 'Suggestions',  shortLabel: 'Sugg.',    icon: Lightbulb },
+  { href: '/discover',    label: 'Découvrir',    shortLabel: 'Explorer', icon: Compass },
+  { href: '/feed',        label: 'Feed',         shortLabel: 'Feed',     icon: Users },
+  { href: '/shopping',    label: 'Courses',      shortLabel: 'Courses',  icon: ShoppingCart },
+  { href: '/profile',     label: 'Profil',       shortLabel: 'Profil',   icon: User },
 ];
 
 // ─── Sidebar (desktop) ────────────────────────────────────────────────────
@@ -39,7 +40,7 @@ export function AppSidebar({ userName, goalLabel }: AppNavProps) {
   const router = useRouter();
 
   const isActive = (href: string): boolean => {
-    if (href === '/feed') return pathname === '/feed';
+    if (href === '/feed' || href === '/discover') return pathname === href;
     return pathname.startsWith(href);
   };
 
@@ -122,7 +123,7 @@ export function AppMobileNav() {
   const pathname = usePathname();
 
   const isActive = (href: string): boolean => {
-    if (href === '/feed') return pathname === '/feed';
+    if (href === '/feed' || href === '/discover') return pathname === href;
     return pathname.startsWith(href);
   };
 

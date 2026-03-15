@@ -33,7 +33,7 @@ function StandaloneHeader() {
   );
 }
 
-export default function FeedPage() {
+export default function DiscoverPage() {
   const { data: session, isPending } = useSession();
   const [goalLabel, setGoalLabel] = useState('');
 
@@ -51,7 +51,7 @@ export default function FeedPage() {
         <div className="flex">
           <AppSidebar userName={session.user.name ?? 'Chef'} goalLabel={goalLabel} />
           <div className="flex-1 min-w-0 pb-20 lg:pb-0">
-            <RecipeBrowser communityOnly={true} pageTitle="Recettes de la communauté" />
+            <RecipeBrowser communityOnly={false} pageTitle="Toutes les recettes" />
           </div>
           <AppMobileNav />
         </div>
@@ -62,7 +62,7 @@ export default function FeedPage() {
   return (
     <div className="min-h-screen bg-canvas-50">
       <StandaloneHeader />
-      <RecipeBrowser communityOnly={true} pageTitle="Recettes de la communauté" />
+      <RecipeBrowser communityOnly={false} pageTitle="Toutes les recettes" />
     </div>
   );
 }
