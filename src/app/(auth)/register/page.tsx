@@ -51,14 +51,21 @@ export default function RegisterPage() {
     e.preventDefault();
     setError('');
     setLoading(true);
-    const { error } = await signUp.email({ name, email, password });
-    setLoading(false);
-    if (error) {
-      setError(error.message ?? 'Une erreur est survenue.');
-    } else {
-      setSuccess(true);
-      setTimeout(() => router.push('/'), 800);
+    try {
+      const result = await signUp.email({ name, email, password });
+      console.log('SignUp result:', result);
+      if (result.error) {
+        console.error('SignUp error:', result.error);
+        setError(result.error.message ?? JSON.stringify(result.error) ?? 'Une erreur est survenue.');
+      } else {
+        setSuccess(true);
+        setTimeout(() => router.push('/'), 800);
+      }
+    } catch (err: any) {
+      console.error('SignUp exception:', err);
+      setError(err?.message ?? JSON.stringify(err) ?? 'Une erreur inconnue.');
     }
+    setLoading(false);
   };
 
   const handleGoogle = () => signIn.social({ provider: 'google', callbackURL: '/' });
