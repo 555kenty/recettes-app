@@ -1,0 +1,19 @@
+<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" fill="none">
+  <defs>
+    <linearGradient id="croissant-g" x1="30" y1="40" x2="90" y2="90" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#F2C14E"/>
+      <stop offset="100%" stop-color="#D4952B"/>
+    </linearGradient>
+  </defs>
+  <!-- Croissant body -->
+  <path d="M25 72c0 0 8-32 35-32s35 32 35 32c0 0-6 12-18 14s-16-2-17-2s-5 4-17 2S25 72 25 72z" fill="url(#croissant-g)"/>
+  <!-- Layered flake lines -->
+  <path d="M34 64c8-14 20-18 26-18s18 4 26 18" stroke="#C4841F" stroke-width="1.8" stroke-linecap="round" fill="none" opacity="0.5"/>
+  <path d="M38 70c6-10 15-14 22-14s16 4 22 14" stroke="#C4841F" stroke-width="1.5" stroke-linecap="round" fill="none" opacity="0.4"/>
+  <path d="M42 76c5-8 11-10 18-10s13 2 18 10" stroke="#C4841F" stroke-width="1.2" stroke-linecap="round" fill="none" opacity="0.3"/>
+  <!-- Tips curled -->
+  <ellipse cx="28" cy="74" rx="7" ry="5" fill="#D4952B" transform="rotate(-15 28 74)"/>
+  <ellipse cx="92" cy="74" rx="7" ry="5" fill="#D4952B" transform="rotate(15 92 74)"/>
+  <!-- Sheen highlight -->
+  <ellipse cx="55" cy="52" rx="12" ry="4" fill="#FCEABB" opacity="0.5" transform="rotate(-8 55 52)"/>
+</svg>

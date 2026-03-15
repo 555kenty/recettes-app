@@ -1,0 +1,27 @@
+<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" fill="none">
+  <defs>
+    <linearGradient id="thai-g" x1="30" y1="40" x2="90" y2="90" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#A5D6A7"/>
+      <stop offset="100%" stop-color="#66BB6A"/>
+    </linearGradient>
+  </defs>
+  <!-- Bowl -->
+  <path d="M20 56c0 0 6 36 40 36s40-36 40-36z" fill="#5C3D2E"/>
+  <!-- Bowl rim -->
+  <ellipse cx="60" cy="56" rx="40" ry="10" fill="#6B4F3A"/>
+  <!-- Green coconut soup -->
+  <ellipse cx="60" cy="56" rx="35" ry="8" fill="url(#thai-g)"/>
+  <!-- Coconut milk swirl -->
+  <path d="M40 54c8 0 12 3 20 1s12-3 18 0" stroke="#F5F5F5" stroke-width="1.5" stroke-linecap="round" fill="none" opacity="0.5"/>
+  <!-- Lemongrass stalk -->
+  <rect x="70" y="34" width="3" height="24" rx="1.5" fill="#C8B560" transform="rotate(12 72 46)"/>
+  <rect x="68" y="32" width="2.5" height="10" rx="1.2" fill="#AFA04A" transform="rotate(12 69 37)" opacity="0.7"/>
+  <!-- Floating ingredients -->
+  <circle cx="45" cy="54" r="2.5" fill="#E8641B" opacity="0.5"/> <!-- chili -->
+  <circle cx="55" cy="52" r="2" fill="#F5F5F5" opacity="0.5"/> <!-- coconut -->
+  <circle cx="68" cy="55" r="2.5" fill="#E8641B" opacity="0.45"/>
+  <!-- Basil leaf -->
+  <path d="M48 48c-1-3 1-5 4-4s3 3 1 5c-1 1-3 1-5-1z" fill="#2E7D32" opacity="0.6"/>
+  <!-- Lime wedge -->
+  <path d="M78 48c2-2 5-1 5 2s-3 3-5 2-1-3 0-4z" fill="#8BC34A" opacity="0.6"/>
+</svg>

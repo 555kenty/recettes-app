@@ -1,0 +1,34 @@
+<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" fill="none">
+  <defs>
+    <linearGradient id="hummus-g" x1="30" y1="40" x2="90" y2="90" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#F5E6C8"/>
+      <stop offset="100%" stop-color="#E8D5A8"/>
+    </linearGradient>
+  </defs>
+  <!-- Bowl -->
+  <path d="M18 58c0 0 6 34 42 34s42-34 42-34z" fill="#D4764E"/>
+  <!-- Bowl rim -->
+  <ellipse cx="60" cy="58" rx="42" ry="10" fill="#E8895C"/>
+  <!-- Hummus surface -->
+  <ellipse cx="60" cy="58" rx="36" ry="8" fill="url(#hummus-g)"/>
+  <!-- Swirl pattern in hummus -->
+  <circle cx="60" cy="56" r="12" fill="none" stroke="#D4C4A0" stroke-width="1.5" opacity="0.4"/>
+  <circle cx="60" cy="56" r="7" fill="none" stroke="#D4C4A0" stroke-width="1" opacity="0.3"/>
+  <!-- Well in center for olive oil -->
+  <circle cx="60" cy="56" r="8" fill="#C8A84E" opacity="0.4"/>
+  <!-- Olive oil drizzle -->
+  <circle cx="60" cy="56" r="5" fill="#D4A017" opacity="0.5"/>
+  <!-- Chickpea garnishes -->
+  <circle cx="48" cy="54" r="2" fill="#E8D5A8" opacity="0.7"/>
+  <circle cx="72" cy="54" r="2" fill="#E8D5A8" opacity="0.7"/>
+  <circle cx="60" cy="50" r="1.8" fill="#E8D5A8" opacity="0.6"/>
+  <!-- Paprika sprinkle -->
+  <circle cx="56" cy="55" r="0.8" fill="#C0392B" opacity="0.5"/>
+  <circle cx="63" cy="54" r="0.7" fill="#C0392B" opacity="0.4"/>
+  <circle cx="58" cy="57" r="0.6" fill="#C0392B" opacity="0.45"/>
+  <!-- Pita bread triangle -->
+  <path d="M82 36l14 20h-18z" fill="#D4952B" opacity="0.85"/>
+  <path d="M82 36l14 20h-18z" stroke="#C8841A" stroke-width="1.5" fill="none" opacity="0.4"/>
+  <!-- Parsley -->
+  <path d="M54 50c-1-2 1-4 3-3s1 3 0 4c-1 0-2 0-3-1z" fill="#4CAF50" opacity="0.5"/>
+</svg>

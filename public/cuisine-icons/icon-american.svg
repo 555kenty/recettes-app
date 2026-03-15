@@ -1,0 +1,29 @@
+<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" fill="none">
+  <defs>
+    <linearGradient id="bun-g" x1="30" y1="20" x2="90" y2="60" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#F2C14E"/>
+      <stop offset="100%" stop-color="#D4952B"/>
+    </linearGradient>
+  </defs>
+  <!-- Bottom bun -->
+  <path d="M24 72h72c0 0 0 14-36 14S24 72 24 72z" fill="#D4952B"/>
+  <rect x="24" y="68" width="72" height="6" rx="3" fill="#E8A617"/>
+  <!-- Lettuce peeking -->
+  <path d="M22 68c6 2 14-2 22 1s14-2 22 1s12-2 18 0" stroke="#66BB6A" stroke-width="4" stroke-linecap="round" fill="none"/>
+  <!-- Tomato -->
+  <rect x="26" y="60" width="68" height="8" rx="4" fill="#E74C3C" opacity="0.85"/>
+  <!-- Patty -->
+  <rect x="24" y="50" width="72" height="12" rx="6" fill="#5C3D2E"/>
+  <!-- Cheese draping over patty -->
+  <path d="M22 52h76l-4 6H26z" fill="#F5C842" opacity="0.85"/>
+  <!-- Top bun -->
+  <path d="M26 52c0-20 14-30 34-30s34 10 34 30z" fill="url(#bun-g)"/>
+  <!-- Sesame seeds -->
+  <ellipse cx="45" cy="32" rx="2.5" ry="1.5" fill="#FCEABB" transform="rotate(-10 45 32)" opacity="0.7"/>
+  <ellipse cx="58" cy="28" rx="2.5" ry="1.5" fill="#FCEABB" transform="rotate(15 58 28)" opacity="0.7"/>
+  <ellipse cx="72" cy="32" rx="2.5" ry="1.5" fill="#FCEABB" transform="rotate(-5 72 32)" opacity="0.7"/>
+  <ellipse cx="52" cy="36" rx="2" ry="1.2" fill="#FCEABB" transform="rotate(8 52 36)" opacity="0.6"/>
+  <ellipse cx="66" cy="38" rx="2" ry="1.2" fill="#FCEABB" transform="rotate(-12 66 38)" opacity="0.6"/>
+  <!-- Bun sheen -->
+  <path d="M40 30c6-6 14-8 24-6" stroke="#FCEABB" stroke-width="2" stroke-linecap="round" fill="none" opacity="0.3"/>
+</svg>

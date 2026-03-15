@@ -1,0 +1,29 @@
+<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" fill="none">
+  <defs>
+    <linearGradient id="coconut-g" x1="30" y1="40" x2="80" y2="90" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#8B6340"/>
+      <stop offset="100%" stop-color="#5C3D2E"/>
+    </linearGradient>
+  </defs>
+  <!-- Palm leaf -->
+  <path d="M75 18c-8 10-4 22-2 28" stroke="#4CAF50" stroke-width="2" stroke-linecap="round" fill="none"/>
+  <path d="M75 18c4 2 14 12 10 24" stroke="#4CAF50" stroke-width="1.5" fill="none"/>
+  <path d="M75 18c-2 4-12 14-14 22" stroke="#4CAF50" stroke-width="1.5" fill="none"/>
+  <path d="M65 30c6 1 16 5 18 14" fill="#66BB6A" opacity="0.7"/>
+  <path d="M62 34c-2 4 2 14 12 12" fill="#4CAF50" opacity="0.6"/>
+  <!-- Coconut half left -->
+  <path d="M22 68c0-16 14-28 28-28s12 28 0 28H22z" fill="url(#coconut-g)"/>
+  <!-- White flesh -->
+  <path d="M26 68c0-12 10-22 22-22s8 22 0 22H26z" fill="#FDFAF5"/>
+  <!-- Coconut half right -->
+  <path d="M62 68c0-16 14-28 28-28s12 28 0 28H62z" fill="url(#coconut-g)"/>
+  <!-- White flesh right -->
+  <path d="M66 68c0-12 10-22 22-22s8 22 0 22H66z" fill="#FDFAF5"/>
+  <!-- Coconut texture dots -->
+  <circle cx="32" cy="52" r="1.5" fill="#6B4F3A" opacity="0.3"/>
+  <circle cx="40" cy="48" r="1" fill="#6B4F3A" opacity="0.25"/>
+  <circle cx="72" cy="52" r="1.5" fill="#6B4F3A" opacity="0.3"/>
+  <circle cx="80" cy="48" r="1" fill="#6B4F3A" opacity="0.25"/>
+  <!-- Shadow under coconuts -->
+  <ellipse cx="54" cy="90" rx="32" ry="5" fill="#5C3D2E" opacity="0.12"/>
+</svg>

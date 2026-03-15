@@ -4,35 +4,34 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { Search, X, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
 import { RecipeCard } from '@/app/components/RecipeCard';
 
-// ─── Cuisines avec vrais drapeaux (flagcdn.com) ──────────────────────────────
-// Format : https://flagcdn.com/w80/{code}.png (80px width, WebP auto)
+// ─── Cuisines avec icônes SVG personnalisées ─────────────────────────────────
 
 const CUISINES = [
   // Europe
-  { label: 'Française',    flag: 'fr', region: 'Europe' },
-  { label: 'Italian',      flag: 'it', region: 'Europe' },
-  { label: 'Spanish',      flag: 'es', region: 'Europe' },
-  { label: 'British',      flag: 'gb', region: 'Europe' },
-  { label: 'Greek',        flag: 'gr', region: 'Europe' },
+  { label: 'Française',    icon: '/cuisine-icons/icon-francaise.svg', region: 'Europe' },
+  { label: 'Italian',      icon: '/cuisine-icons/icon-italian.svg', region: 'Europe' },
+  { label: 'Spanish',      icon: '/cuisine-icons/icon-spanish.svg', region: 'Europe' },
+  { label: 'British',      icon: '/cuisine-icons/icon-british.svg', region: 'Europe' },
+  { label: 'Greek',        icon: '/cuisine-icons/icon-greek.svg', region: 'Europe' },
   // Afrique & Maghreb
-  { label: 'Moroccan',     flag: 'ma', region: 'Afrique' },
-  { label: 'Africaine',    flag: 'sn', region: 'Afrique' },   // Sénégal (Afrique de l'Ouest)
-  { label: 'Haïtienne',    flag: 'ht', region: 'Afrique' },
-  { label: 'Antillaise',   flag: 'mq', region: 'Afrique' },   // Martinique
-  { label: 'Réunionnaise', flag: 're', region: 'Afrique' },
+  { label: 'Moroccan',     icon: '/cuisine-icons/icon-moroccan.svg', region: 'Afrique' },
+  { label: 'Africaine',    icon: '/cuisine-icons/icon-africaine.svg', region: 'Afrique' },
+  { label: 'Haïtienne',    icon: '/cuisine-icons/icon-haitienne.svg', region: 'Afrique' },
+  { label: 'Antillaise',   icon: '/cuisine-icons/icon-antillaise.svg', region: 'Afrique' },
+  { label: 'Réunionnaise', icon: '/cuisine-icons/icon-reunionnaise.svg', region: 'Afrique' },
   // Asie
-  { label: 'Japanese',     flag: 'jp', region: 'Asie' },
-  { label: 'Chinese',      flag: 'cn', region: 'Asie' },
-  { label: 'Indian',       flag: 'in', region: 'Asie' },
-  { label: 'Thai',         flag: 'th', region: 'Asie' },
-  { label: 'Korean',       flag: 'kr', region: 'Asie' },
-  { label: 'Vietnamese',   flag: 'vn', region: 'Asie' },
+  { label: 'Japanese',     icon: '/cuisine-icons/icon-japanese.svg', region: 'Asie' },
+  { label: 'Chinese',      icon: '/cuisine-icons/icon-chinese.svg', region: 'Asie' },
+  { label: 'Indian',       icon: '/cuisine-icons/icon-indian.svg', region: 'Asie' },
+  { label: 'Thai',         icon: '/cuisine-icons/icon-thai.svg', region: 'Asie' },
+  { label: 'Korean',       icon: '/cuisine-icons/icon-korean.svg', region: 'Asie' },
+  { label: 'Vietnamese',   icon: '/cuisine-icons/icon-vietnamese.svg', region: 'Asie' },
   // Amériques
-  { label: 'American',     flag: 'us', region: 'Amériques' },
-  { label: 'Mexican',      flag: 'mx', region: 'Amériques' },
-  { label: 'Jamaican',     flag: 'jm', region: 'Amériques' },
+  { label: 'American',     icon: '/cuisine-icons/icon-american.svg', region: 'Amériques' },
+  { label: 'Mexican',      icon: '/cuisine-icons/icon-mexican.svg', region: 'Amériques' },
+  { label: 'Jamaican',     icon: '/cuisine-icons/icon-jamaican.svg', region: 'Amériques' },
   // Moyen-Orient
-  { label: 'Middle Eastern', flag: 'lb', region: 'Moyen-Orient' },
+  { label: 'Middle Eastern', icon: '/cuisine-icons/icon-middleeastern.svg', region: 'Moyen-Orient' },
 ];
 
 const DIFFICULTIES = ['Facile', 'Moyen', 'Difficile'];
@@ -64,22 +63,22 @@ function CuisineCard({ cuisine, active, onToggle }: {
       className="flex flex-col items-center gap-1.5 flex-shrink-0 group focus:outline-none"
       aria-pressed={active}
     >
-      {/* Conteneur drapeau */}
-      <div className={`relative w-[62px] h-[62px] rounded-2xl overflow-hidden transition-all duration-200 ${
+      {/* Conteneur icône cuisine */}
+      <div className={`relative w-[62px] h-[62px] rounded-2xl overflow-hidden transition-all duration-200 bg-white ${
         active
           ? 'ring-[2.5px] ring-brand-500 ring-offset-2 shadow-lg scale-105'
           : 'ring-1 ring-black/5 shadow-sm group-hover:scale-105 group-hover:shadow-md group-hover:ring-black/10'
       }`}>
         <img
-          src={`https://flagcdn.com/w80/${cuisine.flag}.png`}
+          src={cuisine.icon}
           alt={cuisine.label}
-          className="w-full h-full object-cover"
+          className="w-full h-full object-contain p-2"
           loading="lazy"
           draggable={false}
         />
         {/* Overlay sélectionné */}
         {active && (
-          <div className="absolute inset-0 bg-brand-500/10" />
+          <div className="absolute inset-0 bg-brand-500/10 rounded-2xl" />
         )}
       </div>
       {/* Nom */}
@@ -237,7 +236,7 @@ export function RecipeBrowser({ communityOnly = false, pageTitle }: RecipeBrowse
             </div>
           )}
 
-          {/* ── Cuisine cards avec drapeaux réels ── */}
+          {/* ── Cuisine cards avec icônes SVG ── */}
           <div className="flex gap-4 overflow-x-auto py-3 scrollbar-hide -mx-1 px-1">
             {CUISINES.map((c) => (
               <CuisineCard

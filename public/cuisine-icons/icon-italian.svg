@@ -1,0 +1,26 @@
+<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" fill="none">
+  <defs>
+    <linearGradient id="cheese-g" x1="40" y1="30" x2="80" y2="80" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FCEABB"/>
+      <stop offset="100%" stop-color="#F2C14E"/>
+    </linearGradient>
+  </defs>
+  <!-- Pizza slice base -->
+  <path d="M60 18L22 95h76z" fill="#E8641B" rx="4"/>
+  <!-- Cheese layer -->
+  <path d="M60 28L28 90h64z" fill="url(#cheese-g)"/>
+  <!-- Tomato sauce peek -->
+  <path d="M60 24L25 92h70z" fill="#D94F30" opacity="0.3"/>
+  <!-- Cheese melting blobs -->
+  <ellipse cx="50" cy="60" rx="6" ry="4" fill="#F5D76E" opacity="0.7"/>
+  <ellipse cx="65" cy="70" rx="5" ry="3.5" fill="#F5D76E" opacity="0.6"/>
+  <ellipse cx="55" cy="78" rx="4" ry="3" fill="#F5D76E" opacity="0.5"/>
+  <!-- Pepperoni circles -->
+  <circle cx="52" cy="50" r="4.5" fill="#C0392B" opacity="0.8"/>
+  <circle cx="65" cy="62" r="4" fill="#C0392B" opacity="0.75"/>
+  <circle cx="48" cy="72" r="3.5" fill="#C0392B" opacity="0.7"/>
+  <!-- Crust edge -->
+  <path d="M60 18L22 95" stroke="#D4952B" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M60 18L98 95" stroke="#D4952B" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M22 95h76" stroke="#D4952B" stroke-width="3" stroke-linecap="round"/>
+</svg>

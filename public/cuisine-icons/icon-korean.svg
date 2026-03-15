@@ -1,0 +1,33 @@
+<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" fill="none">
+  <defs>
+    <linearGradient id="bibim-g" x1="30" y1="40" x2="90" y2="90" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#4A4A4A"/>
+      <stop offset="100%" stop-color="#2D2D2D"/>
+    </linearGradient>
+  </defs>
+  <!-- Stone bowl -->
+  <path d="M18 52c0 0 6 40 42 40s42-40 42-40z" fill="url(#bibim-g)"/>
+  <!-- Bowl rim -->
+  <ellipse cx="60" cy="52" rx="42" ry="10" fill="#3D3D3D"/>
+  <!-- Rice base (white) -->
+  <ellipse cx="60" cy="52" rx="36" ry="8" fill="#FDFAF5"/>
+  <!-- Colorful veggie sections (arranged like bibimbap) -->
+  <!-- Carrot (orange) - top left -->
+  <path d="M36 50c4-2 8-2 10 0c0 0-2 2-5 2s-5 0-5-2z" fill="#E8895C"/>
+  <!-- Spinach (green) - top right -->
+  <path d="M72 50c-4-2-8-2-10 0c0 0 2 2 5 2s5 0 5-2z" fill="#4CAF50"/>
+  <!-- Bean sprouts (yellow) - left -->
+  <path d="M34 54c4 0 8-1 10-2" stroke="#F5D76E" stroke-width="3" stroke-linecap="round" opacity="0.8"/>
+  <!-- Zucchini (green) - right -->
+  <path d="M76 54c-4 0-8-1-10-2" stroke="#81C784" stroke-width="3" stroke-linecap="round" opacity="0.7"/>
+  <!-- Beef (brown) - bottom -->
+  <path d="M50 56c4 1 8 1 12 0" stroke="#8B4513" stroke-width="3.5" stroke-linecap="round"/>
+  <!-- Egg yolk center -->
+  <circle cx="60" cy="50" r="5" fill="#F5C842"/>
+  <circle cx="60" cy="50" r="3.5" fill="#F5A623" opacity="0.6"/>
+  <!-- Gochujang (red sauce) drizzle -->
+  <path d="M50 48c3-1 6 0 8 1" stroke="#C0392B" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
+  <!-- Sesame seeds -->
+  <ellipse cx="48" cy="52" rx="1" ry="0.6" fill="#F5EDE0" opacity="0.6"/>
+  <ellipse cx="70" cy="52" rx="1" ry="0.6" fill="#F5EDE0" opacity="0.6"/>
+</svg>

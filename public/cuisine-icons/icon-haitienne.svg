@@ -1,0 +1,25 @@
+<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" fill="none">
+  <defs>
+    <linearGradient id="plantain-g" x1="30" y1="30" x2="90" y2="90" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#F5D76E"/>
+      <stop offset="100%" stop-color="#D4952B"/>
+    </linearGradient>
+  </defs>
+  <!-- Plate -->
+  <ellipse cx="60" cy="85" rx="36" ry="10" fill="#E8DFD0"/>
+  <ellipse cx="60" cy="83" rx="32" ry="7" fill="#F5EDE0"/>
+  <!-- Plantain slices fanned out -->
+  <ellipse cx="38" cy="62" rx="12" ry="16" fill="url(#plantain-g)" transform="rotate(-30 38 62)"/>
+  <ellipse cx="50" cy="56" rx="12" ry="16" fill="url(#plantain-g)" transform="rotate(-15 50 56)"/>
+  <ellipse cx="62" cy="54" rx="12" ry="16" fill="url(#plantain-g)" transform="rotate(0 62 54)"/>
+  <ellipse cx="74" cy="56" rx="12" ry="16" fill="url(#plantain-g)" transform="rotate(15 74 56)"/>
+  <ellipse cx="84" cy="62" rx="12" ry="16" fill="url(#plantain-g)" transform="rotate(30 84 62)"/>
+  <!-- Golden crispy edges on each slice -->
+  <ellipse cx="38" cy="62" rx="10" ry="13" fill="#C8841A" opacity="0.3" transform="rotate(-30 38 62)"/>
+  <ellipse cx="50" cy="56" rx="10" ry="13" fill="#C8841A" opacity="0.25" transform="rotate(-15 50 56)"/>
+  <ellipse cx="62" cy="54" rx="10" ry="13" fill="#C8841A" opacity="0.2" transform="rotate(0 62 54)"/>
+  <ellipse cx="74" cy="56" rx="10" ry="13" fill="#C8841A" opacity="0.25" transform="rotate(15 74 56)"/>
+  <ellipse cx="84" cy="62" rx="10" ry="13" fill="#C8841A" opacity="0.3" transform="rotate(30 84 62)"/>
+  <!-- Highlight sheen -->
+  <ellipse cx="62" cy="48" rx="5" ry="2" fill="#FCEABB" opacity="0.5"/>
+</svg>

@@ -1,0 +1,29 @@
+<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" fill="none">
+  <defs>
+    <linearGradient id="jerk-g" x1="30" y1="30" x2="90" y2="90" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#D4952B"/>
+      <stop offset="100%" stop-color="#8B4513"/>
+    </linearGradient>
+  </defs>
+  <!-- Chicken piece body -->
+  <path d="M30 55c0-12 10-24 28-24s30 12 32 24c2 10-4 22-14 26s-20 2-28-2S28 65 30 55z" fill="url(#jerk-g)"/>
+  <!-- Crispy skin highlights -->
+  <path d="M40 42c6-6 14-8 22-6s12 6 14 12" stroke="#C0623A" stroke-width="2" stroke-linecap="round" fill="none" opacity="0.4"/>
+  <!-- Grill marks -->
+  <line x1="38" y1="50" x2="82" y2="50" stroke="#5C3D2E" stroke-width="2.5" stroke-linecap="round" opacity="0.4"/>
+  <line x1="36" y1="58" x2="84" y2="58" stroke="#5C3D2E" stroke-width="2.5" stroke-linecap="round" opacity="0.35"/>
+  <line x1="38" y1="66" x2="80" y2="66" stroke="#5C3D2E" stroke-width="2.5" stroke-linecap="round" opacity="0.3"/>
+  <line x1="42" y1="74" x2="74" y2="74" stroke="#5C3D2E" stroke-width="2" stroke-linecap="round" opacity="0.25"/>
+  <!-- Spice rub texture -->
+  <circle cx="45" cy="46" r="1.2" fill="#C0392B" opacity="0.4"/>
+  <circle cx="62" cy="44" r="1" fill="#C0392B" opacity="0.35"/>
+  <circle cx="55" cy="55" r="1.2" fill="#E8641B" opacity="0.3"/>
+  <circle cx="70" cy="54" r="1" fill="#C0392B" opacity="0.3"/>
+  <circle cx="48" cy="62" r="1" fill="#E8641B" opacity="0.25"/>
+  <circle cx="65" cy="70" r="1.2" fill="#C0392B" opacity="0.25"/>
+  <!-- Bone end hint -->
+  <ellipse cx="86" cy="44" rx="4" ry="3" fill="#F5EDE0" opacity="0.6"/>
+  <!-- Char marks -->
+  <path d="M44 54c2 0 4-1 4 0" stroke="#3D2B1F" stroke-width="1" stroke-linecap="round" opacity="0.3"/>
+  <path d="M58 62c2 0 5-1 5 0" stroke="#3D2B1F" stroke-width="1" stroke-linecap="round" opacity="0.25"/>
+</svg>

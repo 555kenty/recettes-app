@@ -1,0 +1,27 @@
+<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" fill="none">
+  <defs>
+    <linearGradient id="salmon-g" x1="50" y1="40" x2="70" y2="80" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#F4845F"/>
+      <stop offset="100%" stop-color="#E8641B"/>
+    </linearGradient>
+  </defs>
+  <!-- Nori (outer wrap) -->
+  <circle cx="60" cy="60" r="34" fill="#2E4A2E"/>
+  <!-- Rice ring -->
+  <circle cx="60" cy="60" r="28" fill="#FDFAF5"/>
+  <!-- Rice texture -->
+  <circle cx="60" cy="60" r="27" fill="#F5F0E6" opacity="0.5"/>
+  <!-- Salmon center -->
+  <circle cx="60" cy="60" r="14" fill="url(#salmon-g)"/>
+  <!-- Salmon fat lines -->
+  <path d="M50 56c4 0 8 1 12-1" stroke="#FFC5A3" stroke-width="1.2" stroke-linecap="round" opacity="0.6"/>
+  <path d="M52 61c3 0 7 1 10 0" stroke="#FFC5A3" stroke-width="1" stroke-linecap="round" opacity="0.5"/>
+  <path d="M51 66c3-1 6 0 9-1" stroke="#FFC5A3" stroke-width="1" stroke-linecap="round" opacity="0.45"/>
+  <!-- Avocado sliver -->
+  <path d="M42 52c-2 4-1 10 1 14" stroke="#6B9B37" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+  <!-- Cucumber dots -->
+  <circle cx="72" cy="54" r="3" fill="#81C784" opacity="0.6"/>
+  <circle cx="74" cy="64" r="2.5" fill="#81C784" opacity="0.5"/>
+  <!-- Nori sheen -->
+  <path d="M32 44c4-6 12-12 22-14" stroke="#3E6B3E" stroke-width="1.5" stroke-linecap="round" fill="none" opacity="0.3"/>
+</svg>

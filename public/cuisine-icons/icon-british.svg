@@ -1,0 +1,24 @@
+<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" fill="none">
+  <defs>
+    <linearGradient id="tea-g" x1="40" y1="45" x2="80" y2="95" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FDFAF5"/>
+      <stop offset="100%" stop-color="#F0E6D6"/>
+    </linearGradient>
+  </defs>
+  <!-- Saucer -->
+  <ellipse cx="60" cy="96" rx="34" ry="8" fill="#E8DFD0"/>
+  <ellipse cx="60" cy="94" rx="30" ry="6" fill="#F5EDE0"/>
+  <!-- Cup body -->
+  <path d="M34 52c0 0 0 34 6 38s14 6 20 6s14-2 20-6s6-38 6-38z" fill="url(#tea-g)"/>
+  <!-- Cup rim -->
+  <ellipse cx="60" cy="52" rx="26" ry="7" fill="#F5EDE0"/>
+  <ellipse cx="60" cy="52" rx="22" ry="5" fill="#C8956C" opacity="0.4"/>
+  <!-- Tea liquid -->
+  <ellipse cx="60" cy="55" rx="20" ry="4.5" fill="#C8956C" opacity="0.6"/>
+  <!-- Handle -->
+  <path d="M86 58c8 0 12 4 12 12s-4 12-12 12" stroke="#E8DFD0" stroke-width="4.5" stroke-linecap="round" fill="none"/>
+  <!-- Steam wisps -->
+  <path d="M48 40c0-4 3-8 2-14" stroke="#D4C4B0" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+  <path d="M56 38c0-5 4-8 3-16" stroke="#D4C4B0" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
+  <path d="M64 40c0-4 3-8 2-14" stroke="#D4C4B0" stroke-width="2" stroke-linecap="round" opacity="0.35"/>
+</svg>
