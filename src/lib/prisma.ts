@@ -6,19 +6,22 @@ const globalForPrisma = globalThis as unknown as {
 };
 
 function createPrismaClient() {
-  // Vérifier que DATABASE_URL existe
   if (!process.env.DATABASE_URL) {
-    console.error('DATABASE_URL is not defined');
     throw new Error('DATABASE_URL is required');
   }
 
-  const adapter = new PrismaPg({ 
-    connectionString: process.env.DATABASE_URL 
+  const isProduction = process.env.NODE_ENV === 'production';
+
+  // En production (Vercel → Supabase) : SSL requis + limite connexions serverless
+  const adapter = new PrismaPg({
+    connectionString: process.env.DATABASE_URL,
+    max: 1,
+    ...(isProduction ? { ssl: { rejectUnauthorized: false } } : {}),
   });
-  
-  return new PrismaClient({ 
+
+  return new PrismaClient({
     adapter,
-    log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+    log: isProduction ? ['error'] : ['error', 'warn'],
   });
 }
 
