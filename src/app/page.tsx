@@ -44,6 +44,16 @@ interface IngredientSuggestion { id: string; name: string; category: string | nu
 
 // ─── Constantes ────────────────────────────────────────────────────────────
 
+const DISCOVER_CUISINES = [
+  { label: 'Française', emoji: '🇫🇷' }, { label: 'Italian', emoji: '🇮🇹' },
+  { label: 'American', emoji: '🇺🇸' }, { label: 'Japanese', emoji: '🇯🇵' },
+  { label: 'Indian', emoji: '🇮🇳' },   { label: 'Mexican', emoji: '🇲🇽' },
+  { label: 'Thai', emoji: '🇹🇭' },     { label: 'Jamaican', emoji: '🇯🇲' },
+  { label: 'Spanish', emoji: '🇪🇸' },  { label: 'Chinese', emoji: '🇨🇳' },
+  { label: 'Moroccan', emoji: '🇲🇦' },
+];
+const DISCOVER_DIFFICULTIES = ['Facile', 'Moyen', 'Difficile'];
+
 const CATEGORIES = [
   { id: 'Légumes',  icon: Leaf,          color: 'bg-emerald-100 text-emerald-700' },
   { id: 'Fruits',   icon: Apple,         color: 'bg-rose-100 text-rose-700' },
@@ -107,6 +117,8 @@ export default function Home() {
   const [pantryLoading, setPantryLoading] = useState(false);
   const [savingGoal, setSavingGoal] = useState(false);
   const [search, setSearch] = useState('');
+  const [discoverCuisine, setDiscoverCuisine] = useState('');
+  const [discoverDifficulty, setDiscoverDifficulty] = useState('');
   const [shoppingInput, setShoppingInput] = useState('');
 
   // ── Data loading ──────────────────────────────────────────────────────────
@@ -139,10 +151,12 @@ export default function Home() {
     setSuggestionsLoading(false);
   }, []);
 
-  const loadRecipes = useCallback(async (q = '') => {
+  const loadRecipes = useCallback(async (q = '', cuisine = '', difficulty = '') => {
     setRecipesLoading(true);
     const params = new URLSearchParams({ limit: '24' });
     if (q) params.set('search', q);
+    if (cuisine) params.set('cuisineType', cuisine);
+    if (difficulty) params.set('difficulty', difficulty);
     const res = await fetch(`/api/recipes?${params}`);
     if (res.ok) { const data = await res.json(); setRecipes(data.recipes); }
     setRecipesLoading(false);
@@ -172,9 +186,9 @@ export default function Home() {
 
   useEffect(() => {
     if (view !== 'app') return;
-    const t = setTimeout(() => loadRecipes(search), 400);
+    const t = setTimeout(() => loadRecipes(search, discoverCuisine, discoverDifficulty), 400);
     return () => clearTimeout(t);
-  }, [search, view, loadRecipes]);
+  }, [search, discoverCuisine, discoverDifficulty, view, loadRecipes]);
 
   // Autocomplete ingrédients
   useEffect(() => {
@@ -594,8 +608,10 @@ export default function Home() {
                 <motion.div key="recipes" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
                   <div className="mb-6">
                     <p className="text-xs font-semibold text-brand-500 uppercase tracking-wider mb-1">Explorer</p>
-                    <h2 className="font-serif text-2xl font-bold text-stone-900 mb-4">Toutes les recettes</h2>
-                    <div className="relative">
+                    <h2 className="font-serif text-2xl font-bold text-stone-900 mb-4">
+                      {discoverCuisine ? `Cuisine ${discoverCuisine}` : 'Toutes les recettes'}
+                    </h2>
+                    <div className="relative mb-3">
                       <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
                       <input
                         type="text"
@@ -604,6 +620,42 @@ export default function Home() {
                         placeholder="Rechercher une recette..."
                         className="input-base pl-11 rounded-full"
                       />
+                    </div>
+                    {/* Filtres cuisines */}
+                    <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+                      {DISCOVER_CUISINES.map((c) => (
+                        <button
+                          key={c.label}
+                          onClick={() => setDiscoverCuisine(discoverCuisine === c.label ? '' : c.label)}
+                          className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs whitespace-nowrap transition-all flex-shrink-0 ${
+                            discoverCuisine === c.label ? 'bg-stone-900 text-white' : 'bg-canvas-100 text-stone-600 hover:bg-canvas-200'
+                          }`}
+                        >
+                          {c.emoji} {c.label}
+                        </button>
+                      ))}
+                    </div>
+                    {/* Filtres difficulté */}
+                    <div className="flex gap-2 mt-2 flex-wrap">
+                      {DISCOVER_DIFFICULTIES.map((d) => (
+                        <button
+                          key={d}
+                          onClick={() => setDiscoverDifficulty(discoverDifficulty === d ? '' : d)}
+                          className={`px-2.5 py-1.5 rounded-full text-xs transition-all ${
+                            discoverDifficulty === d ? 'bg-brand-500 text-white' : 'bg-canvas-100 text-stone-600 hover:bg-canvas-200'
+                          }`}
+                        >
+                          {d}
+                        </button>
+                      ))}
+                      {(discoverCuisine || discoverDifficulty || search) && (
+                        <button
+                          onClick={() => { setDiscoverCuisine(''); setDiscoverDifficulty(''); setSearch(''); }}
+                          className="px-2.5 py-1.5 rounded-full text-xs text-red-500 border border-red-200 hover:bg-red-50 flex items-center gap-1 transition-colors"
+                        >
+                          <X className="w-3 h-3" /> Tout effacer
+                        </button>
+                      )}
                     </div>
                   </div>
 
@@ -622,9 +674,12 @@ export default function Home() {
                   ) : recipes.length === 0 ? (
                     <div className="bg-white rounded-3xl p-12 text-center border border-canvas-200 shadow-card">
                       <p className="text-stone-500">Aucune recette trouvée.</p>
-                      {search && (
-                        <button onClick={() => setSearch('')} className="mt-4 text-brand-500 hover:text-brand-600 text-sm font-medium">
-                          Effacer la recherche
+                      {(search || discoverCuisine || discoverDifficulty) && (
+                        <button
+                          onClick={() => { setSearch(''); setDiscoverCuisine(''); setDiscoverDifficulty(''); }}
+                          className="mt-4 text-brand-500 hover:text-brand-600 text-sm font-medium"
+                        >
+                          Effacer les filtres
                         </button>
                       )}
                     </div>

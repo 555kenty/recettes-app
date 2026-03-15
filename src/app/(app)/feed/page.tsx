@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
-import { Search, SlidersHorizontal, X, Sparkles, ChefHat, ArrowLeft } from 'lucide-react';
+import { Search, SlidersHorizontal, X, Sparkles, ChefHat, LayoutDashboard } from 'lucide-react';
 import { RecipeCard } from '@/app/components/RecipeCard';
+import { useSession } from '@/lib/auth-client';
 
 const CUISINES = [
   { label: 'Française', emoji: '🇫🇷' },
@@ -39,6 +40,7 @@ interface Recipe {
 }
 
 export default function FeedPage() {
+  const { data: session } = useSession();
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -97,12 +99,18 @@ export default function FeedPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           {/* Top bar */}
           <div className="flex items-center gap-3 py-3">
-            <Link href="/" className="flex items-center gap-2 text-stone-500 hover:text-stone-800 transition-colors mr-2 flex-shrink-0">
+            <Link href="/feed" className="flex items-center gap-2 text-stone-500 hover:text-stone-800 transition-colors mr-2 flex-shrink-0">
               <div className="w-7 h-7 bg-brand-500 rounded-lg flex items-center justify-center">
                 <ChefHat className="w-4 h-4 text-white" />
               </div>
               <span className="hidden sm:inline font-semibold text-stone-900 text-sm">Cuisine<span className="text-brand-500">Connect</span></span>
             </Link>
+            {session && (
+              <Link href="/" className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-full border border-canvas-200 bg-white text-stone-600 hover:border-brand-300 hover:text-brand-500 text-xs font-medium transition-all flex-shrink-0 mr-1">
+                <LayoutDashboard className="w-3.5 h-3.5" />
+                Mon espace
+              </Link>
+            )}
 
             {/* Barre de recherche */}
             <div className="flex-1 relative">
