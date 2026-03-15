@@ -67,7 +67,7 @@ export default function RecipePage({ params }: { params: { id: string } }) {
     if (!session) return;
     const method = liked ? 'DELETE' : 'POST';
     const res = await fetch(`/api/recipes/${id}/like`, { method });
-    if (res.ok) { const data = await res.json(); setLiked(!liked); setLikeCount(data.likeCount); }
+    if (res.ok) { const data = await res.json(); setLiked(data.liked); setLikeCount(data.likeCount); }
   };
 
   const handleComment = async () => {
