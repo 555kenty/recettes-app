@@ -47,7 +47,7 @@ export default function ImportUrlPage() {
     <div className="min-h-screen bg-slate-50">
       <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8">
         <button
-          onClick={() => router.back()}
+          onClick={() => router.push('/feed')}
           className="flex items-center gap-2 text-slate-500 hover:text-slate-700 mb-6 text-sm transition-colors"
         >
           <ArrowLeft className="w-4 h-4" /> Retour

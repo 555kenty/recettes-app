@@ -49,6 +49,7 @@ export default function FeedPage() {
   const [aiSearch, setAiSearch] = useState(false);
   const loaderRef = useRef<HTMLDivElement>(null);
   const searchTimeout = useRef<NodeJS.Timeout | null>(null);
+  const isFirstRender = useRef(true);
 
   const fetchRecipes = useCallback(async (p: number, q: string, f: typeof filters, replace = false, useAi = false) => {
     setLoading(true);
@@ -66,13 +67,14 @@ export default function FeedPage() {
     setLoading(false);
   }, []);
 
-  useEffect(() => { fetchRecipes(1, '', filters, true); }, []);
+  useEffect(() => { fetchRecipes(1, '', filters, true); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
+    if (isFirstRender.current) { isFirstRender.current = false; return; }
     if (searchTimeout.current) clearTimeout(searchTimeout.current);
     searchTimeout.current = setTimeout(() => { setPage(1); fetchRecipes(1, search, filters, true, aiSearch); }, 400);
     return () => { if (searchTimeout.current) clearTimeout(searchTimeout.current); };
-  }, [search, filters, aiSearch]);
+  }, [search, filters, aiSearch]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const el = loaderRef.current;

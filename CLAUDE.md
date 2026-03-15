@@ -33,6 +33,22 @@ node scripts/generate-embeddings.js --limit=50         # Generate recipe embeddi
 ### Build output
 Standard Next.js SSR build — no `output: 'export'`. Builds to `.next/`. API routes, middleware, and server components all work.
 
+### Route groups
+```
+src/app/
+├── (app)/          # Protected routes — layout.tsx enforces auth via auth.api.getSession()
+│   ├── feed/       # Public recipe feed with AI search toggle
+│   ├── recipes/    # Recipe detail, create, import-url
+│   └── u/          # Public user profiles (/u/[username])
+├── (auth)/         # Public routes — separate centered layout
+│   ├── login/
+│   └── register/
+├── api/            # All API routes use Prisma (not Supabase client)
+└── components/     # Shared UI: RecipeCard.tsx, StoresNearby.tsx
+```
+
+`middleware.ts` at root also guards `/app/*`, `/profile/*`, `/fridge/*`, `/feed/*` as a second layer.
+
 ### Database — dual-layer setup
 Two complementary DB clients coexist:
 
@@ -41,12 +57,10 @@ Two complementary DB clients coexist:
 | Supabase JS client | `src/lib/supabase.ts` | Client-side queries, respects Row Level Security (RLS) |
 | Prisma ORM | `src/lib/prisma.ts` | Type-safe access in API routes and scripts |
 
-The Prisma schema at `prisma/schema.prisma` is the source of truth. Scripts use a `PrismaPg` adapter directly with `DATABASE_URL`. Run `npx prisma db push` to sync to Supabase.
+The Prisma schema at `prisma/schema.prisma` is the source of truth. `prisma.config.ts` (Prisma v7 style) auto-reads `DATABASE_URL`. Run `npx prisma db push` to sync to Supabase.
 
 ### Auth
 `src/lib/auth.ts` configures **BetterAuth** with the Prisma adapter. Methods: email/password, Google OAuth, GitHub OAuth. Handler at `src/app/api/auth/[...all]/route.ts`. Client helper at `src/lib/auth-client.ts`.
-
-`middleware.ts` at root protects `/app/*`, `/profile/*`, `/fridge/*`, `/feed/*` — redirects unauthenticated users to `/login`.
 
 ### Data model (Prisma schema)
 - `Recipe` — JSONB `ingredients` + `steps`, fields: `enriched`, `quality`, `likeCount`, `viewCount`, `sourceId`. Column `embedding vector(768)` added via raw SQL (pgvector — not in Prisma schema, managed outside).
@@ -65,5 +79,16 @@ The Prisma schema at `prisma/schema.prisma` is the source of truth. Scripts use 
 - Search via `GET /api/recipes/semantic-search?q=...` — cosine similarity with pgvector
 - Feed page has an ✨ toggle to switch between standard and AI semantic search
 
+### AI providers
+- **Gemini 2.5-flash** (`GEMINI_API_KEY`) — recipe enrichment and synonym generation
+- **Kimi K2.5** (`OPENROUTER_API_KEY`) — alternative enrichment provider
+- **OpenAI** (`openai` npm package) — Whisper transcription in `POST /api/recipes/import-url` (video → recipe pipeline). Not used as a general AI provider.
+
+### Video import pipeline
+`POST /api/recipes/import-url` accepts a TikTok/Instagram/YouTube URL → `yt-dlp` downloads audio → Whisper transcribes → Gemini/Kimi extracts recipe JSON → saved with `sourceApi: 'video'`.
+
 ### Key env vars
-`DATABASE_URL`, `BETTER_AUTH_SECRET`, `NEXT_PUBLIC_APP_URL`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`. Optional: `GEMINI_API_KEY`, `OPENROUTER_API_KEY` (for Kimi K2.5), `SPOONACULAR_API_KEY`, `GEOAPIFY_API_KEY`, `CLOUDINARY_*`, `GOOGLE_CLIENT_ID/SECRET`, `GITHUB_CLIENT_ID/SECRET`.
+`DATABASE_URL`, `BETTER_AUTH_SECRET`, `NEXT_PUBLIC_APP_URL`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`. Optional: `GEMINI_API_KEY`, `OPENROUTER_API_KEY`, `SPOONACULAR_API_KEY`, `GEOAPIFY_API_KEY`, `CLOUDINARY_*`, `GOOGLE_CLIENT_ID/SECRET`, `GITHUB_CLIENT_ID/SECRET`.
+
+## Product roadmap
+See `TASKS.md` for the full phased roadmap and completion status (Phases 1–5). Most phases are complete; remaining work is embeddings generation and OAuth callback URL configuration.

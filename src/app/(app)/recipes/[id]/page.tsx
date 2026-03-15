@@ -109,7 +109,7 @@ export default function RecipePage({ params }: { params: { id: string } }) {
       <div className="min-h-screen bg-canvas-50 flex items-center justify-center">
         <div className="text-center">
           <p className="text-stone-500 mb-4 font-medium">Recette introuvable</p>
-          <button onClick={() => router.back()} className="text-brand-500 hover:text-brand-600 font-medium text-sm">← Retour</button>
+          <button onClick={() => router.push('/feed')} className="text-brand-500 hover:text-brand-600 font-medium text-sm">← Retour</button>
         </div>
       </div>
     );
@@ -136,7 +136,7 @@ export default function RecipePage({ params }: { params: { id: string } }) {
         {/* Actions */}
         <div className="absolute top-5 left-5 right-5 flex items-center justify-between">
           <button
-            onClick={() => router.back()}
+            onClick={() => router.push('/feed')}
             className="flex items-center gap-2 px-3 py-2 bg-white/10 backdrop-blur-md rounded-full text-white text-sm font-medium hover:bg-white/20 transition-colors border border-white/10"
           >
             <ArrowLeft className="w-4 h-4" /> Retour

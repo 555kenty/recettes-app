@@ -71,7 +71,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
           <p className="text-slate-500 mb-4">Profil introuvable ou privé</p>
-          <button onClick={() => router.back()} className="text-rose-500 hover:underline">Retour</button>
+          <button onClick={() => router.push('/feed')} className="text-rose-500 hover:underline">Retour</button>
         </div>
       </div>
     );
@@ -84,7 +84,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
       {/* Header */}
       <div className="bg-white border-b border-slate-200">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6">
-          <button onClick={() => router.back()} className="flex items-center gap-2 text-slate-500 hover:text-slate-700 mb-6 text-sm transition-colors">
+          <button onClick={() => router.push('/feed')} className="flex items-center gap-2 text-slate-500 hover:text-slate-700 mb-6 text-sm transition-colors">
             <ArrowLeft className="w-4 h-4" /> Retour
           </button>
 

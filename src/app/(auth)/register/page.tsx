@@ -59,7 +59,7 @@ export default function RegisterPage() {
         setError(result.error.message ?? JSON.stringify(result.error) ?? 'Une erreur est survenue.');
       } else {
         setSuccess(true);
-        setTimeout(() => router.push('/'), 800);
+        router.replace('/');
       }
     } catch (err: any) {
       console.error('SignUp exception:', err);

@@ -294,12 +294,12 @@ export default function Home() {
               <span className="font-semibold text-white text-lg">Cuisine<span className="text-brand-200 font-bold">Connect</span></span>
             </div>
             <div className="flex items-center gap-3">
-              <button onClick={() => router.push('/login')} className="text-stone-400 hover:text-white text-sm font-medium transition-colors px-4 py-2">
+              <Link href="/login" className="text-stone-400 hover:text-white text-sm font-medium transition-colors px-4 py-2">
                 Se connecter
-              </button>
-              <button onClick={() => router.push('/register')} className="btn-primary">
+              </Link>
+              <Link href="/register" className="btn-primary">
                 Commencer <ArrowRight className="w-4 h-4" />
-              </button>
+              </Link>
             </div>
           </div>
 
@@ -318,12 +318,12 @@ export default function Home() {
                 Votre compagnon culinaire intelligent — gérez votre frigo, découvrez des recettes personnalisées, partagez vos créations.
               </p>
               <div className="flex flex-col sm:flex-row gap-3">
-                <button onClick={() => router.push('/register')} className="btn-primary text-base px-8 py-4">
+                <Link href="/register" className="btn-primary text-base px-8 py-4">
                   Créer un compte gratuit <ArrowRight className="w-5 h-5" />
-                </button>
-                <button onClick={() => router.push('/feed')} className="btn-secondary text-base px-8 py-4 bg-white/10 border-white/10 text-white hover:bg-white/20">
+                </Link>
+                <Link href="/feed" className="btn-secondary text-base px-8 py-4 bg-white/10 border-white/10 text-white hover:bg-white/20">
                   Explorer les recettes
-                </button>
+                </Link>
               </div>
             </motion.div>
 
@@ -468,7 +468,7 @@ export default function Home() {
                 <p className="text-[11px] text-stone-400 truncate">{goalLabel}</p>
               </div>
               <button
-                onClick={() => signOut().then(() => router.push('/login'))}
+                onClick={() => signOut().then(() => router.replace('/login'))}
                 className="text-stone-400 hover:text-red-500 transition-colors p-1 rounded-lg hover:bg-red-50"
                 title="Se déconnecter"
               >
@@ -776,7 +776,7 @@ export default function Home() {
                         <ArrowRight className="w-4 h-4 text-stone-400" />
                       </Link>
                       <button
-                        onClick={() => signOut().then(() => router.push('/login'))}
+                        onClick={() => signOut().then(() => router.replace('/login'))}
                         className="w-full flex items-center gap-3 px-5 py-4 hover:bg-red-50 transition-colors text-left"
                       >
                         <LogOut className="w-4 h-4 text-red-500" />
