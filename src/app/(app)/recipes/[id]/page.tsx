@@ -56,7 +56,7 @@ export default function RecipePage({ params }: { params: { id: string } }) {
   useEffect(() => {
     fetch(`/api/recipes/${id}`)
       .then((r) => r.json())
-      .then((data) => { setRecipe(data); setLikeCount(data.likeCount ?? 0); setLoading(false); })
+      .then((data) => { setRecipe(data); setLikeCount(data.likeCount ?? 0); setLiked(data.liked ?? false); setLoading(false); })
       .catch(() => setLoading(false));
     fetch(`/api/recipes/${id}/comment`)
       .then((r) => r.json())
@@ -91,9 +91,14 @@ export default function RecipePage({ params }: { params: { id: string } }) {
   };
 
   const shareRecipe = async () => {
-    await navigator.clipboard.writeText(window.location.href);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    const url = window.location.href;
+    if (navigator.share) {
+      try { await navigator.share({ title: recipe?.title ?? 'Recette', url }); } catch {}
+    } else {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
   };
 
   if (loading) {
@@ -109,7 +114,7 @@ export default function RecipePage({ params }: { params: { id: string } }) {
       <div className="min-h-screen bg-canvas-50 flex items-center justify-center">
         <div className="text-center">
           <p className="text-stone-500 mb-4 font-medium">Recette introuvable</p>
-          <button onClick={() => router.push('/feed')} className="text-brand-500 hover:text-brand-600 font-medium text-sm">← Retour</button>
+          <button onClick={() => { if (window.history.length > 1) router.back(); else router.push('/discover'); }} className="text-brand-500 hover:text-brand-600 font-medium text-sm">← Retour</button>
         </div>
       </div>
     );
@@ -136,7 +141,7 @@ export default function RecipePage({ params }: { params: { id: string } }) {
         {/* Actions */}
         <div className="absolute top-5 left-5 right-5 flex items-center justify-between">
           <button
-            onClick={() => router.push('/feed')}
+            onClick={() => { if (window.history.length > 1) router.back(); else router.push('/discover'); }}
             className="flex items-center gap-2 px-3 py-2 bg-white/10 backdrop-blur-md rounded-full text-white text-sm font-medium hover:bg-white/20 transition-colors border border-white/10"
           >
             <ArrowLeft className="w-4 h-4" /> Retour

@@ -8,15 +8,22 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { id: recipeId } = await params;
+  const userId = session.user.id;
 
-  // Incrémente le compteur public de likes
-  const recipe = await prisma.recipe.update({
-    where: { id: recipeId },
-    data: { likeCount: { increment: 1 } },
-    select: { likeCount: true },
+  const existing = await prisma.userFavorite.findUnique({
+    where: { userId_recipeId: { userId, recipeId } },
   });
+  if (existing) {
+    const recipe = await prisma.recipe.findUnique({ where: { id: recipeId }, select: { likeCount: true } });
+    return NextResponse.json({ likeCount: recipe?.likeCount ?? 0, liked: true });
+  }
 
-  return NextResponse.json({ likeCount: recipe.likeCount });
+  const [, recipe] = await Promise.all([
+    prisma.userFavorite.create({ data: { userId, recipeId } }),
+    prisma.recipe.update({ where: { id: recipeId }, data: { likeCount: { increment: 1 } }, select: { likeCount: true } }),
+  ]);
+
+  return NextResponse.json({ likeCount: recipe.likeCount, liked: true });
 }
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -24,12 +31,20 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { id: recipeId } = await params;
+  const userId = session.user.id;
 
-  const recipe = await prisma.recipe.update({
-    where: { id: recipeId },
-    data: { likeCount: { decrement: 1 } },
-    select: { likeCount: true },
+  const existing = await prisma.userFavorite.findUnique({
+    where: { userId_recipeId: { userId, recipeId } },
   });
+  if (!existing) {
+    const recipe = await prisma.recipe.findUnique({ where: { id: recipeId }, select: { likeCount: true } });
+    return NextResponse.json({ likeCount: recipe?.likeCount ?? 0, liked: false });
+  }
 
-  return NextResponse.json({ likeCount: recipe.likeCount });
+  const [, recipe] = await Promise.all([
+    prisma.userFavorite.delete({ where: { userId_recipeId: { userId, recipeId } } }),
+    prisma.recipe.update({ where: { id: recipeId }, data: { likeCount: { decrement: 1 } }, select: { likeCount: true } }),
+  ]);
+
+  return NextResponse.json({ likeCount: recipe.likeCount, liked: false });
 }

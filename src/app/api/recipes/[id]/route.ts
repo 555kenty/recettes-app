@@ -6,16 +6,20 @@ import { headers } from 'next/headers';
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
-  const recipe = await prisma.recipe.findUnique({
-    where: { id },
-  });
+  const session = await auth.api.getSession({ headers: await headers() });
+
+  const [recipe, favorite] = await Promise.all([
+    prisma.recipe.findUnique({ where: { id } }),
+    session ? prisma.userFavorite.findUnique({
+      where: { userId_recipeId: { userId: session.user.id, recipeId: id } },
+    }) : Promise.resolve(null),
+  ]);
 
   if (!recipe) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-  // Incrémenter viewCount
   await prisma.recipe.update({ where: { id }, data: { viewCount: { increment: 1 } } });
 
-  return NextResponse.json(recipe);
+  return NextResponse.json({ ...recipe, liked: !!favorite });
 }
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
