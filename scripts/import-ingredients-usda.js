@@ -28,13 +28,13 @@ const prisma = new PrismaClient({ adapter });
 
 const USDA_API_KEY = process.env.USDA_API_KEY;
 const USDA_BASE = 'https://api.nal.usda.gov/fdc/v1';
-const DELAY_MS = 400; // USDA allows ~3 req/s on free tier
+const DELAY_MS = 3700; // USDA rate limit: 1,000 req/hour → 1 every 3.6s; use 3.7s for safety
 
-// USDA nutrient IDs
-const NUTRIENT_KCAL     = 1008;
-const NUTRIENT_PROTEIN  = 1003;
-const NUTRIENT_FAT      = 1004;
-const NUTRIENT_CARBS    = 1005;
+// USDA nutrient IDs (Foundation foods may use 2047/2048 for energy instead of 1008)
+const NUTRIENT_KCAL     = [1008, 2047, 2048];
+const NUTRIENT_PROTEIN  = [1003];
+const NUTRIENT_FAT      = [1004];
+const NUTRIENT_CARBS    = [1005];
 
 // Prefer Foundation > SR Legacy > Survey data
 const DATA_TYPE_PRIORITY = ['Foundation', 'SR Legacy', 'Survey (FNDDS)', 'Branded'];
@@ -42,8 +42,9 @@ const DATA_TYPE_PRIORITY = ['Foundation', 'SR Legacy', 'Survey (FNDDS)', 'Brande
 // ─── CLI args ─────────────────────────────────────────────────────────────────
 
 const args = process.argv.slice(2);
-const DRY_RUN        = args.includes('--dry-run');
+const DRY_RUN         = args.includes('--dry-run');
 const ENRICH_EXISTING = args.includes('--enrich-existing');
+const SKIP_EXISTING   = args.includes('--skip-existing'); // skip ingredients already in DB with macros
 const limitArg = args.find((a) => a.startsWith('--limit='));
 const LIMIT = limitArg ? parseInt(limitArg.split('=')[1]) : Infinity;
 
@@ -51,9 +52,13 @@ const LIMIT = limitArg ? parseInt(limitArg.split('=')[1]) : Infinity;
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-function extractNutrient(foodNutrients, nutrientId) {
-  const n = foodNutrients.find((n) => n.nutrientId === nutrientId || n.nutrient?.id === nutrientId);
-  return n ? parseFloat(n.value ?? n.amount ?? 0) : null;
+function extractNutrient(foodNutrients, nutrientIds) {
+  const ids = Array.isArray(nutrientIds) ? nutrientIds : [nutrientIds];
+  for (const nutrientId of ids) {
+    const n = foodNutrients.find((n) => n.nutrientId === nutrientId || n.nutrient?.id === nutrientId);
+    if (n) return parseFloat(n.value ?? n.amount ?? 0);
+  }
+  return null;
 }
 
 function bestDataType(foods) {
@@ -64,25 +69,19 @@ function bestDataType(foods) {
   return foods[0] ?? null;
 }
 
-async function searchUSDA(query, retries = 3) {
-  const params = new URLSearchParams({
-    query,
-    dataType: 'Foundation,SR Legacy,Survey (FNDDS)',
-    pageSize: '5',
-    api_key: USDA_API_KEY,
-  });
-  const url = `${USDA_BASE}/foods/search?${params}`;
+async function searchUSDA(query, retries = 2) {
+  // Keep commas literal in dataType — URLSearchParams would encode them as %2C which breaks filtering
+  const url = `${USDA_BASE}/foods/search?query=${encodeURIComponent(query)}&dataType=Foundation,SR%20Legacy,Survey%20(FNDDS)&pageSize=5&api_key=${USDA_API_KEY}`;
   for (let attempt = 1; attempt <= retries; attempt++) {
     const res = await fetch(url);
     if (res.ok) {
       const data = await res.json();
       return data.foods ?? [];
     }
-    if (res.status === 429 || res.status === 400) {
-      if (attempt < retries) {
-        await sleep(DELAY_MS * attempt * 2);
-        continue;
-      }
+    if ((res.status === 429 || res.status === 400) && attempt < retries) {
+      // Back off: wait extra 10s on rate-limit hits
+      await sleep(10000);
+      continue;
     }
     throw new Error(`USDA HTTP ${res.status} for "${query}"`);
   }
@@ -124,8 +123,12 @@ const FR_TO_EN = [
   [/\bcrème fraîche\b/gi, 'sour cream'],
   [/\bcrème liquide\b/gi, 'heavy cream'],
   [/\bcrème\b/gi, 'cream'],
-  [/\bfarine de blé\b/gi, 'wheat flour'],
-  [/\bfarine de maïs\b/gi, 'cornmeal'],
+  [/\bfarine de ble\b/gi, 'wheat flour'],
+  [/\bfarine de mais\b/gi, 'cornmeal'],
+  [/\bfarine de sarrasin\b/gi, 'buckwheat flour'],
+  [/\bfarine de riz\b/gi, 'rice flour'],
+  [/\bfarine de pois chiche\b/gi, 'chickpea flour'],
+  [/\bfarine d['']amande\b/gi, 'almond flour'],
   [/\blevure chimique\b/gi, 'baking powder'],
   [/\blevure\b/gi, 'yeast'],
   [/\bchocolat noir\b/gi, 'dark chocolate'],
@@ -162,7 +165,8 @@ const FR_TO_EN = [
   [/\bhomard\b/gi, 'lobster'],
   [/\bcalmar\b/gi, 'squid'],
   // Dairy / eggs
-  [/\boeuf|œuf\b/gi, 'egg'],
+  [/\boeufs?\b/gi, 'egg'],
+  [/\boeuf\b/gi, 'egg'],
   [/\bbeurre\b/gi, 'butter'],
   [/\blait\b/gi, 'milk'],
   [/\bfromage blanc\b/gi, 'quark cheese'],
@@ -304,6 +308,8 @@ function stripAccents(str) {
 
 function toEnglish(name) {
   let result = name.toLowerCase().trim();
+  // Replace ligatures before accent stripping (œ/æ are not decomposed by NFD)
+  result = result.replace(/œ/g, 'oe').replace(/æ/g, 'ae');
   // Normalise accents first so regex patterns match both é/e etc.
   result = stripAccents(result);
   // Remove parenthetical details: (rumsteck ou faux-filet) etc.
@@ -376,10 +382,27 @@ async function main() {
     console.log(`🔢  Limité à ${LIMIT} ingrédients`);
   }
 
-  let imported = 0, updated = 0, notFound = 0, errors = 0;
+  // Build set of names already enriched (caloriesPer100g + proteins) to skip on restart
+  let alreadyEnriched = new Set();
+  if (SKIP_EXISTING) {
+    const done = await prisma.ingredient.findMany({
+      where: { caloriesPer100g: { not: null }, proteinsPer100g: { not: null } },
+      select: { name: true },
+    });
+    alreadyEnriched = new Set(done.map((d) => d.name));
+    console.log(`⏭️  ${alreadyEnriched.size} ingrédients déjà enrichis — ignorés`);
+  }
+
+  let imported = 0, updated = 0, notFound = 0, errors = 0, skipped = 0;
 
   for (let i = 0; i < ingredientNames.length; i++) {
     const rawName = ingredientNames[i];
+
+    if (SKIP_EXISTING && alreadyEnriched.has(rawName)) {
+      skipped++;
+      continue;
+    }
+
     const searchQuery = toEnglish(rawName);
 
     process.stdout.write(`[${i + 1}/${ingredientNames.length}] "${rawName}" → "${searchQuery}" … `);
@@ -461,6 +484,7 @@ async function main() {
   console.log('\n─────────────────────────────────────────');
   console.log(`✅  Importés  : ${imported}`);
   console.log(`🔄  Mis à jour: ${updated}`);
+  console.log(`⏭️  Ignorés   : ${skipped}`);
   console.log(`❓  Introuvables: ${notFound}`);
   console.log(`🔴  Erreurs   : ${errors}`);
   if (DRY_RUN) console.log('\n⚠️  Mode dry-run — aucune écriture en DB');
