@@ -119,6 +119,10 @@ model Ingredient {
   category        String?
   imageUrl        String?  @map("image_url")
   caloriesPer100g Int?     @map("calories_per_100g")
+  proteinsPer100g Float?   @map("proteins_per_100g")
+  fatsPer100g     Float?   @map("fats_per_100g")
+  carbsPer100g    Float?   @map("carbs_per_100g")
+  usdaFdcId       Int?     @map("usda_fdc_id")   // USDA FoodData Central ID for traceability
   createdAt       DateTime @default(now()) @map("created_at")
 
   pantryItems UserPantry[]

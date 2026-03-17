@@ -467,16 +467,16 @@ export async function computeNutrition(
     let macros: MacroPer100g | null = null;
 
     if (dbIng && dbIng.caloriesPer100g != null) {
-      // DB hit: estimate macros from kcal with generic ratio
       const k = dbIng.caloriesPer100g;
+      // Prefer exact USDA macro columns; fall back to ratio estimate
       macros = {
-        kcal: k,
-        proteins: (k * 0.20) / 4,
-        fats: (k * 0.30) / 9,
-        carbs: (k * 0.50) / 4,
+        kcal:     k,
+        proteins: dbIng.proteinsPer100g ?? (k * 0.20) / 4,
+        fats:     dbIng.fatsPer100g     ?? (k * 0.30) / 9,
+        carbs:    dbIng.carbsPer100g    ?? (k * 0.50) / 4,
       };
     } else {
-      // Fallback: keyword lookup table
+      // Fallback: hardcoded lookup table (covers common cooking ingredients)
       macros = lookupIngredient(recipeIng.name);
     }
 
