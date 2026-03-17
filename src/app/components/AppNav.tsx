@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
-  ChefHat, Lightbulb, Compass, ShoppingCart, User, LogOut, Users,
+  ChefHat, Lightbulb, Compass, ShoppingCart, User, LogOut, Users, Scale, Activity,
 } from 'lucide-react';
 import { signOut } from '@/lib/auth-client';
 
@@ -25,12 +25,14 @@ interface AppNavProps {
 // ─── Navigation items ──────────────────────────────────────────────────────
 
 const NAV_ITEMS: NavItem[] = [
-  { href: '/fridge',      label: 'Mon Frigo',    shortLabel: 'Frigo',    icon: ChefHat },
-  { href: '/suggestions', label: 'Suggestions',  shortLabel: 'Sugg.',    icon: Lightbulb },
-  { href: '/discover',    label: 'Découvrir',    shortLabel: 'Explorer', icon: Compass },
-  { href: '/feed',        label: 'Feed',         shortLabel: 'Feed',     icon: Users },
-  { href: '/shopping',    label: 'Courses',      shortLabel: 'Courses',  icon: ShoppingCart },
-  { href: '/profile',     label: 'Profil',       shortLabel: 'Profil',   icon: User },
+  { href: '/fridge',      label: 'Mon Frigo',    shortLabel: 'Frigo',   icon: ChefHat },
+  { href: '/suggestions', label: 'Suggestions',  shortLabel: 'Sugg.',   icon: Lightbulb },
+  { href: '/discover',    label: 'Découvrir',    shortLabel: 'Explorer',icon: Compass },
+  { href: '/feed',        label: 'Feed',         shortLabel: 'Feed',    icon: Users },
+  { href: '/nutrition',   label: 'Nutrition',    shortLabel: 'Nutri.',  icon: Activity },
+  { href: '/compare',     label: 'Comparer',     shortLabel: 'Comp.',   icon: Scale },
+  { href: '/shopping',    label: 'Courses',      shortLabel: 'Courses', icon: ShoppingCart },
+  { href: '/profile',     label: 'Profil',       shortLabel: 'Profil',  icon: User },
 ];
 
 // ─── Sidebar (desktop) ────────────────────────────────────────────────────
@@ -40,7 +42,7 @@ export function AppSidebar({ userName, goalLabel }: AppNavProps) {
   const router = useRouter();
 
   const isActive = (href: string): boolean => {
-    if (href === '/feed' || href === '/discover') return pathname === href;
+    if (href === '/feed' || href === '/discover' || href === '/compare') return pathname === href;
     return pathname.startsWith(href);
   };
 
@@ -123,13 +125,13 @@ export function AppMobileNav() {
   const pathname = usePathname();
 
   const isActive = (href: string): boolean => {
-    if (href === '/feed' || href === '/discover') return pathname === href;
+    if (href === '/feed' || href === '/discover' || href === '/compare') return pathname === href;
     return pathname.startsWith(href);
   };
 
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur border-t border-canvas-200 px-2 py-2 safe-area-inset-bottom z-20">
-      <div className="flex justify-around">
+    <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur border-t border-canvas-200 safe-area-inset-bottom z-20">
+      <div className="flex overflow-x-auto [&::-webkit-scrollbar]:hidden px-1 py-2 gap-0.5">
         {NAV_ITEMS.map((item) => {
           const active = isActive(item.href);
           const Icon = item.icon;
@@ -137,7 +139,7 @@ export function AppMobileNav() {
             <Link
               key={item.href}
               href={item.href}
-              className={`relative flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all ${
+              className={`relative flex flex-col flex-shrink-0 items-center gap-0.5 px-2.5 py-1.5 rounded-xl transition-all ${
                 active ? 'text-brand-500' : 'text-stone-400 hover:text-stone-600'
               }`}
             >

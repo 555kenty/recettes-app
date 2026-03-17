@@ -4,9 +4,10 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Heart, Clock, Flame, Users, Send, Trash2, ChefHat, CheckCircle2, ShoppingCart, Share2, Loader2 } from 'lucide-react';
+import { ArrowLeft, Heart, Clock, Flame, Users, Send, Trash2, ChefHat, CheckCircle2, ShoppingCart, Share2, Loader2, Beef, Droplets, Wheat, ChevronDown } from 'lucide-react';
 import { useSession } from '@/lib/auth-client';
 import { StoresNearby } from '@/app/components/StoresNearby';
+import type { NutritionResult } from '@/lib/nutrition';
 
 interface Step { order: number; description: string; duration_minutes?: number | null; tip?: string | null }
 interface Ingredient { name: string; quantity?: string; unit?: string; category?: string }
@@ -52,12 +53,25 @@ export default function RecipePage({ params }: { params: { id: string } }) {
   const [sending, setSending] = useState(false);
   const [doneSteps, setDoneSteps] = useState<Set<number>>(new Set());
   const [copied, setCopied] = useState(false);
+  const [nutrition, setNutrition] = useState<NutritionResult | null>(null);
+  const [nutritionLoading, setNutritionLoading] = useState(true);
+  const [displayServings, setDisplayServings] = useState(1);
 
   useEffect(() => {
     fetch(`/api/recipes/${id}`)
       .then((r) => r.json())
-      .then((data) => { setRecipe(data); setLikeCount(data.likeCount ?? 0); setLiked(data.liked ?? false); setLoading(false); })
+      .then((data) => {
+        setRecipe(data);
+        setLikeCount(data.likeCount ?? 0);
+        setLiked(data.liked ?? false);
+        setDisplayServings(data.servings ?? 1);
+        setLoading(false);
+      })
       .catch(() => setLoading(false));
+    fetch(`/api/recipes/${id}/nutrition`)
+      .then((r) => r.json())
+      .then((data) => { if (!data.error) { setNutrition(data); } setNutritionLoading(false); })
+      .catch(() => setNutritionLoading(false));
     fetch(`/api/recipes/${id}/comment`)
       .then((r) => r.json())
       .then((data) => setComments(data.comments ?? []));
@@ -226,41 +240,98 @@ export default function RecipePage({ params }: { params: { id: string } }) {
         {/* ── Contenu principal ── */}
         <div className="grid lg:grid-cols-3 gap-8 mb-10">
 
-          {/* Ingrédients */}
+          {/* Ingrédients + Nutrition */}
           <div className="lg:col-span-1">
-            <div className="lg:sticky lg:top-6">
-              <h2 className="font-serif text-xl font-bold text-stone-900 mb-4">Ingrédients</h2>
-              {ingredients.length === 0 ? (
-                <p className="text-stone-400 text-sm">Aucun ingrédient listé.</p>
-              ) : (
-                <>
-                  <ul className="space-y-2.5 mb-5">
-                    {ingredients.map((ing, i) => (
-                      <li key={i} className="flex items-start gap-3 text-stone-700">
-                        <span className="w-1.5 h-1.5 rounded-full bg-brand-500 mt-2 flex-shrink-0" />
-                        <span className="text-sm leading-snug">
-                          <span className="font-medium">{ing.name}</span>
-                          {(ing.quantity || ing.unit) && (
-                            <span className="text-stone-400 ml-1">— {[ing.quantity, ing.unit].filter(Boolean).join(' ')}</span>
-                          )}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                  <button
-                    onClick={() => {
-                      // Ajouter tous les ingrédients à la liste de courses
-                      const body = JSON.stringify({
-                        name: 'Ma liste',
-                        items: ingredients.map(i => ({ name: `${i.name}${i.quantity ? ` — ${i.quantity}` : ''}`, checked: false })),
-                      });
-                      fetch('/api/shopping-list', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body });
-                    }}
-                    className="flex items-center gap-2 text-sm text-stone-500 hover:text-brand-500 transition-colors font-medium"
-                  >
-                    <ShoppingCart className="w-4 h-4" /> Tout ajouter aux courses
-                  </button>
-                </>
+            <div className="lg:sticky lg:top-6 space-y-6">
+              <div>
+                <h2 className="font-serif text-xl font-bold text-stone-900 mb-4">Ingrédients</h2>
+                {ingredients.length === 0 ? (
+                  <p className="text-stone-400 text-sm">Aucun ingrédient listé.</p>
+                ) : (
+                  <>
+                    <ul className="space-y-2.5 mb-5">
+                      {ingredients.map((ing, i) => (
+                        <li key={i} className="flex items-start gap-3 text-stone-700">
+                          <span className="w-1.5 h-1.5 rounded-full bg-brand-500 mt-2 flex-shrink-0" />
+                          <span className="text-sm leading-snug">
+                            <span className="font-medium">{ing.name}</span>
+                            {(ing.quantity || ing.unit) && (
+                              <span className="text-stone-400 ml-1">— {[ing.quantity, ing.unit].filter(Boolean).join(' ')}</span>
+                            )}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                    <button
+                      onClick={() => {
+                        const body = JSON.stringify({
+                          name: 'Ma liste',
+                          items: ingredients.map(i => ({ name: `${i.name}${i.quantity ? ` — ${i.quantity}` : ''}`, checked: false })),
+                        });
+                        fetch('/api/shopping-list', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body });
+                      }}
+                      className="flex items-center gap-2 text-sm text-stone-500 hover:text-brand-500 transition-colors font-medium"
+                    >
+                      <ShoppingCart className="w-4 h-4" /> Tout ajouter aux courses
+                    </button>
+                  </>
+                )}
+              </div>
+
+              {/* ── Nutrition block ── */}
+              {(nutritionLoading || nutrition) && (
+                <div className="border-t border-canvas-200 pt-5">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-serif text-base font-bold text-stone-900">Valeurs nutritionnelles</h3>
+                    <div className="relative">
+                      <select
+                        value={displayServings}
+                        onChange={(e) => setDisplayServings(Number(e.target.value))}
+                        className="appearance-none bg-canvas-100 text-stone-700 text-xs font-medium rounded-lg pl-2.5 pr-6 py-1.5 border border-canvas-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-500/30"
+                      >
+                        {Array.from({ length: 8 }, (_, i) => i + 1).map((n) => (
+                          <option key={n} value={n}>{n} pers.</option>
+                        ))}
+                      </select>
+                      <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-stone-400 pointer-events-none" />
+                    </div>
+                  </div>
+
+                  {nutritionLoading ? (
+                    <div className="grid grid-cols-2 gap-2">
+                      {Array.from({ length: 4 }).map((_, i) => (
+                        <div key={i} className="h-16 bg-canvas-100 rounded-2xl animate-pulse" />
+                      ))}
+                    </div>
+                  ) : nutrition && (
+                    <motion.div
+                      initial="hidden"
+                      animate="visible"
+                      variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.08 } } }}
+                      className="grid grid-cols-2 gap-2"
+                    >
+                      {([
+                        { label: 'Calories', value: Math.round(nutrition.perServing.kcal * displayServings), unit: 'kcal', icon: Flame, color: 'text-orange-500', bg: 'bg-orange-50', border: 'border-orange-100' },
+                        { label: 'Protéines', value: Math.round(nutrition.perServing.proteins * displayServings * 10) / 10, unit: 'g', icon: Beef, color: 'text-blue-500', bg: 'bg-blue-50', border: 'border-blue-100' },
+                        { label: 'Lipides', value: Math.round(nutrition.perServing.fats * displayServings * 10) / 10, unit: 'g', icon: Droplets, color: 'text-amber-500', bg: 'bg-amber-50', border: 'border-amber-100' },
+                        { label: 'Glucides', value: Math.round(nutrition.perServing.carbs * displayServings * 10) / 10, unit: 'g', icon: Wheat, color: 'text-emerald-500', bg: 'bg-emerald-50', border: 'border-emerald-100' },
+                      ] as const).map((m) => (
+                        <motion.div
+                          key={m.label}
+                          variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0, transition: { duration: 0.35 } } }}
+                          className={`${m.bg} border ${m.border} rounded-2xl p-3 flex flex-col gap-1`}
+                        >
+                          <m.icon className={`w-4 h-4 ${m.color}`} />
+                          <p className={`text-xl font-bold ${m.color}`}>{m.value}</p>
+                          <p className="text-[11px] text-stone-500 leading-none">{m.label} ({m.unit})</p>
+                        </motion.div>
+                      ))}
+                    </motion.div>
+                  )}
+                  {nutrition && nutrition.matchedCount === 0 && (
+                    <p className="text-[11px] text-stone-400 mt-2 text-center">Données non disponibles pour ces ingrédients</p>
+                  )}
+                </div>
               )}
             </div>
           </div>

@@ -147,6 +147,12 @@ model UserProfile {
   followersCount Int      @default(0) @map("followers_count")
   followingCount Int      @default(0) @map("following_count")
   isPublic       Boolean  @default(true) @map("is_public")
+  // Nutrition / TDEE fields
+  age            Int?
+  weight         Float?   // kg
+  height         Float?   // cm
+  gender         String?  // "male" | "female"
+  activityLevel  String?  @map("activity_level") // "sedentary" | "light" | "moderate" | "active" | "very_active"
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
 

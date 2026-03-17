@@ -1,6 +1,6 @@
 # TASKS.md — CuisineConnect · Feuille de route complète
 
-> Dernière mise à jour : 2026-03-14
+> Dernière mise à jour : 2026-03-15
 > Ordre d'exécution : Phase 1 → 2 → 3 → 4 → 5
 
 ---
@@ -377,6 +377,75 @@ GEOAPIFY_API_KEY=                      # 3000 req/jour gratuit sur geoapify.com
 [x] 15. Recherche sémantique pgvector          ← FAIT (embeddings 768-dim, route + toggle feed)
 [~] 16. Génération embeddings                  ← EN COURS (94+/596 recettes)
 ```
+
+---
+
+## PHASE 6 — Données culturelles & Diversité culinaire
+
+> **Contexte** : TheMealDB ne couvre pas les cuisines africaines, antillaises ni maghrébines francophone.
+> Objectif : 200–300 recettes supplémentaires issues de ces cuisines, avec enrichissement IA.
+
+### 6.1 Sources de données disponibles (par priorité)
+
+| Source | Coût | Cuisines manquantes | Méthode |
+|---|---|---|---|
+| **Spoonacular API** | 150 req/jour gratuit | African, Caribbean, Middle Eastern | Script import + `cuisine=` filter |
+| **Gemini génération directe** | ~0 (clé déjà dispo) | Tout ce qu'on veut | Script génération batch |
+| **Import vidéo** (yt-dlp + Whisper) | 0 | Antillaise, Sénégalaise, etc. | `/api/recipes/import-url` |
+| **196flavors.com** | 0 (scraping) | Mondiale, très diversifiée | Scraping manuel ciblé |
+| **Marmiton** | 0 (scraping) | Française régionale, DOM-TOM | Scraping manuel ciblé |
+
+### 6.2 Cuisines prioritaires à importer
+
+- [ ] **Antillaise / Créole** (Martinique, Guadeloupe, Haïti) — colombo, accras, boudin créole, griot, pois collé
+- [ ] **Africaine de l'Ouest** (Sénégal, Côte d'Ivoire, Mali) — thiéboudienne, yassa, mafé, attiéké, foutou
+- [ ] **Africaine centrale** (Cameroun, Congo) — ndolé, koki, saka-saka, mbanga soup
+- [ ] **Maghrébine** (Algérie, Tunisie, Maroc) — tajine, merguez, chakchouka, brik, harira
+- [ ] **Réunionnaise / Malagasy** — rougail saucisse, carry poulet, achards
+- [ ] **Moyen-Orientale** (Liban, Turquie) — houmous, fattoush, kebbe, börek
+- [ ] **Asiatique du Sud-Est** (Vietnam, Philippines) — pho, banh mi, adobo, sinigang
+
+### 6.3 Script génération IA (méthode recommandée — zéro dépendance externe)
+
+> Génère N recettes authentiques pour une cuisine donnée directement via Gemini 2.5-flash.
+> Avantage : 100% contrôlé, format parfait, enrichissement intégré, zéro rate-limit.
+
+- [ ] Créer `scripts/generate-cultural-recipes.js` :
+  ```bash
+  node scripts/generate-cultural-recipes.js --cuisine="Antillaise" --count=30
+  node scripts/generate-cultural-recipes.js --cuisine="Africaine de l'Ouest" --count=40
+  node scripts/generate-cultural-recipes.js --cuisine="Maghrébine" --count=25
+  ```
+  - Prompt Gemini : demander JSON structuré (titre, description, ingrédients, étapes, temps, difficulté, tags)
+  - Upsert dans DB avec `sourceApi: 'ai-generated'`, `enriched: true`, `quality: 9`
+  - Batch de 5 recettes par appel pour réduire les tokens
+
+### 6.4 Script import Spoonacular (méthode secondaire)
+
+- [ ] Créer `scripts/import-spoonacular-cultural.js` :
+  ```bash
+  node scripts/import-spoonacular-cultural.js --cuisine="African" --count=50
+  node scripts/import-spoonacular-cultural.js --cuisine="Caribbean" --count=30
+  ```
+  - `GET https://api.spoonacular.com/recipes/complexSearch?cuisine=African&number=50`
+  - Récupérer le détail pour chaque ID : `GET /recipes/{id}/information`
+  - Mapper vers notre schéma Recipe, upsert par `sourceId`
+  - Rate limit : 1 req/sec max (150/jour gratuit)
+
+### 6.5 UI Filtres cuisine — style Uber Eats (cards visuelles)
+
+- [x] Remplacer les pills texte par des **cards scrollables horizontalement** :
+  - Card : image de fond (URL picsum/unsplash ciblée) ou grand emoji sur fond coloré
+  - Nom de la cuisine en dessous
+  - Taille ~80×90px, border-radius xl
+  - Active state : anneau coloré `ring-2 ring-brand-500`
+- [x] Ajouter les nouvelles cuisines dans `CUISINES` de `RecipeBrowser.tsx`
+- [ ] Une fois les recettes importées : vérifier que les filtres retournent bien des résultats
+
+### 6.6 Images manquantes
+
+- [ ] Lancer `node scripts/import-ingredients-off.js --limit=500` pour enrichir les images ingrédients
+- [ ] Pour les nouvelles recettes générées par IA : utiliser Cloudinary + images libres de droits (Unsplash API)
 
 ---
 

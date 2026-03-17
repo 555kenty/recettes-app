@@ -21,6 +21,11 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
           followersCount: true,
           followingCount: true,
           goal: true,
+          age: true,
+          weight: true,
+          height: true,
+          gender: true,
+          activityLevel: true,
         },
       },
     },
@@ -42,12 +47,12 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   const { id } = await params;
   if (session.user.id !== id) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
-  const { bio, goal, isPublic } = await req.json();
+  const { bio, goal, isPublic, age, weight, height, gender, activityLevel } = await req.json();
 
   const profile = await prisma.userProfile.upsert({
     where: { id },
-    create: { id, bio, goal, isPublic },
-    update: { bio, goal, isPublic },
+    create: { id, bio, goal, isPublic, age, weight, height, gender, activityLevel },
+    update: { bio, goal, isPublic, age, weight, height, gender, activityLevel },
   });
 
   return NextResponse.json({ profile });

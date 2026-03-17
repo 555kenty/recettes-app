@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
+import pg from 'pg';
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
@@ -10,18 +11,22 @@ function createPrismaClient() {
     throw new Error('DATABASE_URL is required');
   }
 
-  const isProduction = process.env.NODE_ENV === 'production';
-
-  // En production (Vercel → Supabase) : SSL requis + limite connexions serverless
-  const adapter = new PrismaPg({
+  // Sur Vercel (production) : SSL obligatoire pour Supabase
+  const pool = new pg.Pool({
     connectionString: process.env.DATABASE_URL,
     max: 1,
-    ...(isProduction ? { ssl: { rejectUnauthorized: false } } : {}),
+    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
   });
+
+  pool.on('error', (err) => {
+    console.error('[Prisma Pool] Unexpected error:', err);
+  });
+
+  const adapter = new PrismaPg(pool as never);
 
   return new PrismaClient({
     adapter,
-    log: isProduction ? ['error'] : ['error', 'warn'],
+    log: ['error'],
   });
 }
 
