@@ -14,15 +14,21 @@
  *   USDA_API_KEY=xxxx node scripts/import-ingredients-usda.js --dry-run
  */
 
-const { PrismaClient } = require('@prisma/client');
+require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
 
-const prisma = new PrismaClient();
+const { PrismaClient } = require('@prisma/client');
+const { PrismaPg } = require('@prisma/adapter-pg');
+const { Pool } = require('pg');
+
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter });
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
 const USDA_API_KEY = process.env.USDA_API_KEY;
 const USDA_BASE = 'https://api.nal.usda.gov/fdc/v1';
-const DELAY_MS = 250; // USDA allows ~3 req/s on free tier
+const DELAY_MS = 400; // USDA allows ~3 req/s on free tier
 
 // USDA nutrient IDs
 const NUTRIENT_KCAL     = 1008;
@@ -58,12 +64,29 @@ function bestDataType(foods) {
   return foods[0] ?? null;
 }
 
-async function searchUSDA(query) {
-  const url = `${USDA_BASE}/foods/search?query=${encodeURIComponent(query)}&dataType=Foundation,SR%20Legacy,Survey%20(FNDDS)&pageSize=5&api_key=${USDA_API_KEY}`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`USDA HTTP ${res.status} for "${query}"`);
-  const data = await res.json();
-  return data.foods ?? [];
+async function searchUSDA(query, retries = 3) {
+  const params = new URLSearchParams({
+    query,
+    dataType: 'Foundation,SR Legacy,Survey (FNDDS)',
+    pageSize: '5',
+    api_key: USDA_API_KEY,
+  });
+  const url = `${USDA_BASE}/foods/search?${params}`;
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    const res = await fetch(url);
+    if (res.ok) {
+      const data = await res.json();
+      return data.foods ?? [];
+    }
+    if (res.status === 429 || res.status === 400) {
+      if (attempt < retries) {
+        await sleep(DELAY_MS * attempt * 2);
+        continue;
+      }
+    }
+    throw new Error(`USDA HTTP ${res.status} for "${query}"`);
+  }
+  return [];
 }
 
 async function fetchFoodDetail(fdcId) {
@@ -77,58 +100,223 @@ async function fetchFoodDetail(fdcId) {
 // USDA works best with English terms. Map common French words to English.
 
 const FR_TO_EN = [
-  [/\bpoulet\b/gi, 'chicken'], [/\bboeuf\b/gi, 'beef'], [/\bporc\b/gi, 'pork'],
-  [/\bagneau\b/gi, 'lamb'],    [/\bdinde\b/gi, 'turkey'], [/\bcanard\b/gi, 'duck'],
-  [/\bsaumon\b/gi, 'salmon'],  [/\bthon\b/gi, 'tuna'],   [/\bcabillaud\b/gi, 'cod'],
-  [/\bcrevettes?\b/gi, 'shrimp'], [/\bmoules?\b/gi, 'mussel'],
-  [/\btomates?\b/gi, 'tomato'], [/\boignons?\b/gi, 'onion'], [/\bail\b/gi, 'garlic'],
-  [/\bcarottes?\b/gi, 'carrot'], [/\bcourge\b/gi, 'squash'], [/\bcourgettes?\b/gi, 'zucchini'],
-  [/\bépinards?\b/gi, 'spinach'], [/\bchampignons?\b/gi, 'mushroom'],
-  [/\baubergines?\b/gi, 'eggplant'], [/\bpoivrons?\b/gi, 'bell pepper'],
-  [/\bpommes? de terre\b/gi, 'potato'], [/\bpatate douce\b/gi, 'sweet potato'],
-  [/\bpois chiches?\b/gi, 'chickpeas'], [/\blentilles?\b/gi, 'lentils'],
-  [/\bharicots?\b/gi, 'beans'], [/\bfarine\b/gi, 'flour'], [/\briz\b/gi, 'rice'],
-  [/\bpâtes\b/gi, 'pasta'], [/\bcouscous\b/gi, 'couscous'], [/\bquinoa\b/gi, 'quinoa'],
-  [/\bpain\b/gi, 'bread'], [/\bbeurre\b/gi, 'butter'], [/\bhomard\b/gi, 'lobster'],
-  [/\bcrème\b/gi, 'cream'], [/\blait de coco\b/gi, 'coconut milk'],
-  [/\blait\b/gi, 'milk'], [/\bfromage\b/gi, 'cheese'], [/\boeuf|œuf\b/gi, 'egg'],
-  [/\bhuile d'olive\b/gi, 'olive oil'], [/\bhuile\b/gi, 'oil'],
-  [/\bsucre\b/gi, 'sugar'], [/\bmiel\b/gi, 'honey'], [/\bchocolat\b/gi, 'chocolate'],
-  [/\bnoix de coco\b/gi, 'coconut'], [/\bcitron vert\b/gi, 'lime'],
-  [/\bcitron\b/gi, 'lemon'], [/\bangue\b/gi, 'mango'], [/\bbanane\b/gi, 'banana'],
-  [/\bavocat\b/gi, 'avocado'], [/\bnoix\b/gi, 'walnut'], [/\bamandes?\b/gi, 'almonds'],
-  [/\bcacahuètes?\b/gi, 'peanuts'], [/\bgingembre\b/gi, 'ginger'],
-  [/\bcannelle\b/gi, 'cinnamon'], [/\bcurcuma\b/gi, 'turmeric'],
-  [/\bpaprika\b/gi, 'paprika'], [/\bcumin\b/gi, 'cumin'], [/\bcoriandre\b/gi, 'coriander'],
-  [/\bpersil\b/gi, 'parsley'], [/\bbasilique?\b/gi, 'basil'],
-  [/\bthym\b/gi, 'thyme'], [/\bromarin\b/gi, 'rosemary'],
-  [/\bpoivre\b/gi, 'black pepper'], [/\bsel\b/gi, 'salt'],
-  [/\bvinaigre\b/gi, 'vinegar'], [/\bsauce soja\b/gi, 'soy sauce'],
-  [/\bmoutarde\b/gi, 'mustard'], [/\bvin blanc\b/gi, 'white wine'],
-  [/\bvin rouge\b/gi, 'red wine'], [/\bvin\b/gi, 'wine'],
-  [/\bcolombo\b/gi, 'curry powder'], [/\bmasala\b/gi, 'masala spice mix'],
-  [/\bpiment\b/gi, 'chili pepper'], [/\bechalote\b/gi, 'shallot'],
-  [/\bfenouil\b/gi, 'fennel'], [/\bceleri\b/gi, 'celery'],
-  [/\bchapelure\b/gi, 'breadcrumbs'], [/\blevure\b/gi, 'yeast'],
-  [/\bmaïs\b/gi, 'corn'], [/\btofu\b/gi, 'tofu'], [/\bghee\b/gi, 'ghee'],
-  [/\bsaindoux\b/gi, 'lard'], [/\bpoireau\b/gi, 'leek'],
-  [/\bbrocoli\b/gi, 'broccoli'], [/\bchou-fleur\b/gi, 'cauliflower'],
-  [/\bchou\b/gi, 'cabbage'], [/\bbetterave\b/gi, 'beet'],
-  [/\bpotiron\b/gi, 'pumpkin'], [/\bnavet\b/gi, 'turnip'],
-  [/\bgombo\b/gi, 'okra'], [/\basperges?\b/gi, 'asparagus'],
-  [/\bartiaut\b/gi, 'artichoke'], [/\bconcombre\b/gi, 'cucumber'],
-  [/\bcéleri\b/gi, 'celery'], [/\bsalade\b/gi, 'lettuce'],
-  [/\béchalotes?\b/gi, 'shallot'], [/\bmenthe\b/gi, 'mint'],
-  [/\bananas\b/gi, 'pineapple'], [/\boranges?\b/gi, 'orange'],
-  [/\bpommes?\b/gi, 'apple'], [/\bfraises?\b/gi, 'strawberry'],
+  // Multi-word first (order matters)
+  [/\blait de coco\b/gi, 'coconut milk'],
+  [/\bnoix de coco\b/gi, 'coconut'],
+  [/\bnoix de cajou\b/gi, 'cashew'],
+  [/\bnoix de muscade\b/gi, 'nutmeg'],
+  [/\bnoix du bresil\b/gi, 'brazil nuts'],
+  [/\bhuile d['']olive\b/gi, 'olive oil'],
+  [/\bhuile de tournesol\b/gi, 'sunflower oil'],
+  [/\bhuile de sésame\b/gi, 'sesame oil'],
+  [/\bhuile v[eé]g[eé]tale\b/gi, 'vegetable oil'],
+  [/\bhuile de palme\b/gi, 'palm oil'],
+  [/\bhuile\b/gi, 'oil'],
+  [/\bpommes? de terre\b/gi, 'potato'],
+  [/\bpatate douce\b/gi, 'sweet potato'],
+  [/\bpois chiches?\b/gi, 'chickpeas'],
+  [/\bpois cassés?\b/gi, 'split peas'],
+  [/\bvin blanc\b/gi, 'white wine'],
+  [/\bvin rouge\b/gi, 'red wine'],
+  [/\bsauce soja\b/gi, 'soy sauce'],
+  [/\bcitron vert\b/gi, 'lime'],
+  [/\bchou-fleur\b/gi, 'cauliflower'],
+  [/\bcrème fraîche\b/gi, 'sour cream'],
+  [/\bcrème liquide\b/gi, 'heavy cream'],
+  [/\bcrème\b/gi, 'cream'],
+  [/\bfarine de blé\b/gi, 'wheat flour'],
+  [/\bfarine de maïs\b/gi, 'cornmeal'],
+  [/\blevure chimique\b/gi, 'baking powder'],
+  [/\blevure\b/gi, 'yeast'],
+  [/\bchocolat noir\b/gi, 'dark chocolate'],
+  [/\bchocolat au lait\b/gi, 'milk chocolate'],
+  [/\bchocolat blanc\b/gi, 'white chocolate'],
+  [/\bchocolat\b/gi, 'chocolate'],
+  [/\bsucre glace\b/gi, 'powdered sugar'],
+  [/\bsucre roux\b/gi, 'brown sugar'],
+  [/\bsucre\b/gi, 'sugar'],
+  [/\bpoivre noir\b/gi, 'black pepper'],
+  [/\bpoivre\b/gi, 'black pepper'],
+  [/\bpoivron rouge\b/gi, 'red bell pepper'],
+  [/\bpoivron vert\b/gi, 'green bell pepper'],
+  [/\bpoivrons?\b/gi, 'bell pepper'],
+  [/\bpiment rouge\b/gi, 'red chili'],
+  [/\bpiment vert\b/gi, 'green chili'],
+  [/\bpiment\b/gi, 'chili pepper'],
+  // Proteins
+  [/\bpoulet\b/gi, 'chicken'],
+  [/\bb[oœ]euf|bœuf\b/gi, 'beef'],
+  [/\bveau\b/gi, 'veal'],
+  [/\bporc\b/gi, 'pork'],
+  [/\bagneau\b/gi, 'lamb'],
+  [/\bdinde\b/gi, 'turkey'],
+  [/\bcanard\b/gi, 'duck'],
+  [/\blapin\b/gi, 'rabbit'],
+  [/\bsaumon\b/gi, 'salmon'],
+  [/\bthon\b/gi, 'tuna'],
+  [/\bcabillaud\b/gi, 'cod'],
+  [/\bmerlan\b/gi, 'whiting'],
+  [/\bcrevettes?\b/gi, 'shrimp'],
+  [/\bmoules?\b/gi, 'mussel'],
+  [/\bpalourdes?\b/gi, 'clams'],
+  [/\bhomard\b/gi, 'lobster'],
+  [/\bcalmar\b/gi, 'squid'],
+  // Dairy / eggs
+  [/\boeuf|œuf\b/gi, 'egg'],
+  [/\bbeurre\b/gi, 'butter'],
+  [/\blait\b/gi, 'milk'],
+  [/\bfromage blanc\b/gi, 'quark cheese'],
+  [/\bfromage\b/gi, 'cheese'],
+  [/\byaourt|yogourt\b/gi, 'yogurt'],
+  // Vegetables
+  [/\btomates? cerises?\b/gi, 'cherry tomato'],
+  [/\btomates?\b/gi, 'tomato'],
+  [/\boignons? rouge\b/gi, 'red onion'],
+  [/\boignons?\b/gi, 'onion'],
+  [/\bail\b/gi, 'garlic'],
+  [/\bcarottes?\b/gi, 'carrot'],
+  [/\bcourge\b/gi, 'squash'],
+  [/\bcourgettes?\b/gi, 'zucchini'],
+  [/\bépinards?\b/gi, 'spinach'],
+  [/\bchampignons? de paris\b/gi, 'button mushroom'],
+  [/\bchampignons?\b/gi, 'mushroom'],
+  [/\baubergines?\b/gi, 'eggplant'],
+  [/\bbrocoli\b/gi, 'broccoli'],
+  [/\bchou\b/gi, 'cabbage'],
+  [/\bbetterave\b/gi, 'beet'],
+  [/\bpotiron\b/gi, 'pumpkin'],
+  [/\bnavet\b/gi, 'turnip'],
+  [/\bgombo\b/gi, 'okra'],
+  [/\basperges?\b/gi, 'asparagus'],
+  [/\bartichauts?\b/gi, 'artichoke'],
+  [/\bconcombre\b/gi, 'cucumber'],
+  [/\bcéleri|céleri\b/gi, 'celery'],
+  [/\bceleri\b/gi, 'celery'],
+  [/\bsalade\b/gi, 'lettuce'],
+  [/\béchalotes?|echalotes?\b/gi, 'shallot'],
+  [/\bpoireau\b/gi, 'leek'],
+  [/\bmaïs\b/gi, 'corn'],
+  [/\bpatate\b/gi, 'potato'],
+  // Legumes / grains
+  [/\blentilles?\b/gi, 'lentils'],
+  [/\bharicots? blancs?\b/gi, 'white beans'],
+  [/\bharicots? rouges?\b/gi, 'kidney beans'],
+  [/\bharicots? verts?\b/gi, 'green beans'],
+  [/\bharicots?\b/gi, 'beans'],
+  [/\bfarine\b/gi, 'flour'],
+  [/\briz\b/gi, 'rice'],
+  [/\bpâtes\b/gi, 'pasta'],
+  [/\bcouscous\b/gi, 'couscous'],
+  [/\bquinoa\b/gi, 'quinoa'],
+  [/\bpain\b/gi, 'bread'],
+  [/\bchapelure\b/gi, 'breadcrumbs'],
+  [/\btofu\b/gi, 'tofu'],
+  // Fruits / nuts
+  [/\bnoix\b/gi, 'walnut'],
+  [/\bamandes?\b/gi, 'almonds'],
+  [/\bcacahuètes?|cacahouètes?\b/gi, 'peanuts'],
+  [/\bpistaches?\b/gi, 'pistachios'],
+  [/\bpignons?\b/gi, 'pine nuts'],
+  [/\bcitron\b/gi, 'lemon'],
+  [/\bmangue\b/gi, 'mango'],
+  [/\bbanane\b/gi, 'banana'],
+  [/\bavocat\b/gi, 'avocado'],
+  [/\bananas|ananas\b/gi, 'pineapple'],
+  [/\boranges?\b/gi, 'orange'],
+  [/\bpommes?\b/gi, 'apple'],
+  [/\bfraises?\b/gi, 'strawberry'],
+  [/\braisins? secs?\b/gi, 'raisins'],
   [/\braisins?\b/gi, 'grapes'],
+  [/\bpapayes?\b/gi, 'papaya'],
+  [/\bgoyave\b/gi, 'guava'],
+  // Spices / herbs
+  [/\bgingembre\b/gi, 'ginger'],
+  [/\bcannelle\b/gi, 'cinnamon'],
+  [/\bcurcuma\b/gi, 'turmeric'],
+  [/\bpaprika\b/gi, 'paprika'],
+  [/\bcumin\b/gi, 'cumin'],
+  [/\bcoriandre\b/gi, 'coriander'],
+  [/\bpersil\b/gi, 'parsley'],
+  [/\bbasilic\b/gi, 'basil'],
+  [/\bthym\b/gi, 'thyme'],
+  [/\bromarin\b/gi, 'rosemary'],
+  [/\bmenthe\b/gi, 'mint'],
+  [/\borigan\b/gi, 'oregano'],
+  [/\bsafran\b/gi, 'saffron'],
+  [/\bcardamome\b/gi, 'cardamom'],
+  [/\bclous? de girofle\b/gi, 'cloves'],
+  [/\bnoix de muscade\b/gi, 'nutmeg'],
+  [/\bvanille\b/gi, 'vanilla'],
+  [/\bvinaigre balsamique\b/gi, 'balsamic vinegar'],
+  [/\bvinaigre\b/gi, 'vinegar'],
+  [/\bsel\b/gi, 'salt'],
+  // Condiments / sauces
+  [/\bjus de citron\b/gi, 'lemon juice'],
+  [/\bjus d['']orange\b/gi, 'orange juice'],
+  [/\bbouillon poulet\b/gi, 'chicken broth'],
+  [/\bbouillon legumes\b/gi, 'vegetable broth'],
+  [/\bbouillon boeuf\b/gi, 'beef broth'],
+  [/\bbouillon\b/gi, 'broth'],
+  [/\bsaucisses?\b/gi, 'sausage'],
+  [/\blardons?\b/gi, 'bacon bits'],
+  [/\bnouilles?\b/gi, 'noodles'],
+  [/\bvermicelles?\b/gi, 'vermicelli'],
+  [/\blaitue\b/gi, 'lettuce'],
+  [/\broquette\b/gi, 'arugula'],
+  [/\bmache\b/gi, 'lamb lettuce'],
+  [/\bviande\b/gi, 'meat'],
+  [/\bmoulu\b/gi, 'ground'],
+  [/\blaurier\b/gi, 'bay leaf'],
+  [/\bhalloumi\b/gi, 'halloumi cheese'],
+  [/\bfeta\b/gi, 'feta cheese'],
+  [/\bparmesan\b/gi, 'parmesan cheese'],
+  [/\bmozzarella\b/gi, 'mozzarella'],
+  [/\bgruyere\b/gi, 'gruyere cheese'],
+  [/\bricotta\b/gi, 'ricotta'],
+  [/\bpancetta\b/gi, 'pancetta'],
+  [/\bprosciutto\b/gi, 'prosciutto'],
+  [/\bchorizon?\b/gi, 'chorizo'],
+  [/\bsaumon fume\b/gi, 'smoked salmon'],
+  [/\bfume\b/gi, 'smoked'],
+  [/\bsauce huitre\b/gi, 'oyster sauce'],
+  [/\bsauce poisson\b/gi, 'fish sauce'],
+  [/\bsauce worcestershire\b/gi, 'worcestershire sauce'],
+  [/\bsauce tomate\b/gi, 'tomato sauce'],
+  [/\bsauce piquante\b/gi, 'hot sauce'],
+  [/\bpate de tomate\b/gi, 'tomato paste'],
+  [/\bconcentre de tomate\b/gi, 'tomato paste'],
+  [/\bmoutarde\b/gi, 'mustard'],
+  [/\bvin\b/gi, 'wine'],
+  [/\bcolombo\b/gi, 'curry powder'],
+  [/\bmasala\b/gi, 'masala spice mix'],
+  [/\bghee\b/gi, 'ghee'],
+  [/\bsaindoux\b/gi, 'lard'],
+  [/\bmiel\b/gi, 'honey'],
+  [/\bfenouil\b/gi, 'fennel'],
 ];
+
+// Strip French qualifiers that confuse USDA after translation (accent-stripped form)
+const FR_QUALIFIERS = /\b(frais|fraiche|fraiches|cru|crue|crus|hache|hachee|emince|emincee|entier|entiere|rouge|vert|verte|blanc|blanche|noir|noire|doux|douce|seche|sechee|confit|confite|cuit|cuite|a point|pele|pelee|rape|rapee|en des|en poudre|en conserve|surgele|surgelee|nature|bio|de mer|de montagne|du pays|claire|feuilles?|thai|indien|indienne|africain|africaine|antillais|antillaise)\b/gi;
+
+function stripAccents(str) {
+  return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
 
 function toEnglish(name) {
   let result = name.toLowerCase().trim();
+  // Normalise accents first so regex patterns match both é/e etc.
+  result = stripAccents(result);
+  // Remove parenthetical details: (rumsteck ou faux-filet) etc.
+  result = result.replace(/\([^)]*\)/g, '').trim();
   for (const [pattern, replacement] of FR_TO_EN) {
     result = result.replace(pattern, replacement);
   }
+  // Strip remaining French qualifiers
+  result = result.replace(FR_QUALIFIERS, '').replace(/\s+/g, ' ').trim();
+  // Strip any remaining non-ASCII characters (accents, special chars)
+  result = result.replace(/[^\x00-\x7F]/g, '').replace(/\s+/g, ' ').trim();
+  // Strip orphan French articles/prepositions that may be left over
+  result = result.replace(/\b(de|du|des|le|la|les|un|une|au|aux|en|et|ou|a)\b/g, '').replace(/\s+/g, ' ').trim();
   return result;
 }
 
@@ -211,7 +399,8 @@ async function main() {
 
       // Get detailed nutrients (search results sometimes lack full nutrient list)
       let nutrients = best.foodNutrients ?? [];
-      if (nutrients.length < 4 && best.fdcId) {
+      const kcalCheck = extractNutrient(nutrients, NUTRIENT_KCAL);
+      if ((nutrients.length < 4 || kcalCheck === null) && best.fdcId) {
         const detail = await fetchFoodDetail(best.fdcId);
         if (detail) nutrients = detail.foodNutrients ?? nutrients;
         await sleep(DELAY_MS);
