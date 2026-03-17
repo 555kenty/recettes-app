@@ -1,0 +1,23 @@
+# Recettes Guadeloupe / Martinique / Antillaises françaises
+# Sources : 196flavors.com, caribbeanpot.com, 750g.com
+
+# --- 196flavors.com ---
+# ti-punch, blancmange, callaloo → HTTP 500 on this server, skipped
+https://www.196flavors.com/french-west-indies-accras-de-morue-salt-cod-fritters/
+
+# --- caribbeanpot.com ---
+https://caribbeanpot.com/french-caribbean-creole-sauce-for-fish-and-grilled-meats/
+https://caribbeanpot.com/the-ultimate-pommecythere-chow-pickled-ambarella/
+https://caribbeanpot.com/a-creamy-caribbean-curry-pumpkin-soup/
+
+# --- 750g.com ---
+https://www.750g.com/bokit-r36975.htm
+https://www.750g.com/accras-de-morue-r50017.htm
+https://www.750g.com/blaff-de-poisson-r43636.htm
+https://www.750g.com/boudin-antillais-colombo-de-pois-chiches-r66687.htm
+https://www.750g.com/colombo-de-poulet-r11133.htm
+https://www.750g.com/colombo-dagneau-r77885.htm
+https://www.750g.com/poulet-antillais-r48574.htm
+https://www.750g.com/poulet-boucane-r39967.htm
+https://www.750g.com/fricassee-de-poulet-des-antilles-r42288.htm
+https://www.750g.com/gratin-de-christophine-chayotte-r12303.htm

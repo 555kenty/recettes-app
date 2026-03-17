@@ -12,6 +12,9 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
+  html[data-dir="rtl"] {
+    direction: rtl;
+  }
   body {
     @apply bg-canvas-50 text-stone-900 font-sans;
   }

@@ -1,0 +1,156 @@
+{
+  "nav": {
+    "fridge": "My Fridge",
+    "suggestions": "Suggestions",
+    "discover": "Discover",
+    "feed": "Feed",
+    "nutrition": "Nutrition",
+    "compare": "Compare",
+    "shopping": "Shopping",
+    "profile": "Profile"
+  },
+  "nav_short": {
+    "fridge": "Fridge",
+    "suggestions": "Sugg.",
+    "discover": "Explore",
+    "feed": "Feed",
+    "nutrition": "Nutri.",
+    "compare": "Comp.",
+    "shopping": "Shop",
+    "profile": "Profile"
+  },
+  "common": {
+    "search": "Search...",
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "retry": "Retry",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "back": "Back",
+    "seeAll": "See all",
+    "noResults": "No results",
+    "login": "Log in",
+    "logout": "Log out",
+    "register": "Sign up",
+    "submit": "Submit",
+    "close": "Close",
+    "minutes": "min",
+    "servings": "servings",
+    "difficulty": {
+      "easy": "Easy",
+      "medium": "Medium",
+      "hard": "Hard"
+    }
+  },
+  "fridge": {
+    "title": "My Fridge",
+    "empty": "Your fridge is empty",
+    "addIngredient": "Add an ingredient",
+    "search": "Search for an ingredient...",
+    "expiry": "Expiry",
+    "removeAll": "Clear all"
+  },
+  "suggestions": {
+    "title": "Suggestions",
+    "subtitle": "Recipes based on your fridge",
+    "noMatch": "No recipes match your ingredients",
+    "match": "match"
+  },
+  "discover": {
+    "title": "Discover",
+    "subtitle": "All recipes",
+    "filters": "Filters",
+    "allCuisines": "All cuisines",
+    "allDifficulties": "All difficulties",
+    "aiSearch": "AI Search",
+    "loadMore": "Load more"
+  },
+  "feed": {
+    "title": "Feed",
+    "subtitle": "Community recipes",
+    "aiToggle": "AI Search"
+  },
+  "nutrition": {
+    "title": "Nutrition",
+    "tdee": "Daily calorie needs",
+    "consumed": "Consumed today",
+    "target": "Target",
+    "protein": "Protein",
+    "fat": "Fat",
+    "carbs": "Carbs",
+    "calories": "Calories",
+    "history": "Today's history",
+    "profileIncomplete": "Complete your profile to see your TDEE",
+    "age": "Age",
+    "weight": "Weight (kg)",
+    "height": "Height (cm)",
+    "gender": "Gender",
+    "male": "Male",
+    "female": "Female",
+    "activityLevel": "Activity level",
+    "sedentary": "Sedentary",
+    "light": "Lightly active",
+    "moderate": "Moderately active",
+    "active": "Very active",
+    "veryActive": "Extremely active"
+  },
+  "compare": {
+    "title": "Compare",
+    "subtitle": "Compare up to 3 recipes",
+    "addRecipe": "Add a recipe",
+    "perServing": "Per serving",
+    "total": "Total",
+    "searchPlaceholder": "Search for a recipe..."
+  },
+  "shopping": {
+    "title": "Shopping list",
+    "empty": "Your list is empty",
+    "addItem": "Add an item",
+    "clearChecked": "Remove checked",
+    "newList": "New list"
+  },
+  "profile": {
+    "title": "My Profile",
+    "goal": "Goal",
+    "goalLose": "Eat healthy",
+    "goalSport": "Sports goal",
+    "goalCook": "Cook & share",
+    "bio": "Bio",
+    "publicProfile": "Public profile",
+    "savedRecipes": "Saved recipes",
+    "followers": "Followers",
+    "following": "Following"
+  },
+  "recipe": {
+    "ingredients": "Ingredients",
+    "steps": "Steps",
+    "nutrition": "Nutrition",
+    "calories": "kcal",
+    "protein": "Protein",
+    "fat": "Fat",
+    "carbs": "Carbs",
+    "servings": "servings",
+    "difficulty": "Difficulty",
+    "time": "Time",
+    "like": "Like",
+    "liked": "Liked",
+    "addToList": "Add to my list",
+    "share": "Share",
+    "similar": "Similar recipes"
+  },
+  "auth": {
+    "loginTitle": "Login",
+    "registerTitle": "Create an account",
+    "email": "Email",
+    "password": "Password",
+    "name": "Name",
+    "forgotPassword": "Forgot password?",
+    "noAccount": "No account?",
+    "hasAccount": "Already have an account?",
+    "orContinueWith": "Or continue with",
+    "welcomeBack": "Welcome back!"
+  }
+}

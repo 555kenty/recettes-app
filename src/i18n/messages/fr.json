@@ -1,0 +1,156 @@
+{
+  "nav": {
+    "fridge": "Mon Frigo",
+    "suggestions": "Suggestions",
+    "discover": "Découvrir",
+    "feed": "Feed",
+    "nutrition": "Nutrition",
+    "compare": "Comparer",
+    "shopping": "Courses",
+    "profile": "Profil"
+  },
+  "nav_short": {
+    "fridge": "Frigo",
+    "suggestions": "Sugg.",
+    "discover": "Explorer",
+    "feed": "Feed",
+    "nutrition": "Nutri.",
+    "compare": "Comp.",
+    "shopping": "Courses",
+    "profile": "Profil"
+  },
+  "common": {
+    "search": "Rechercher...",
+    "loading": "Chargement...",
+    "error": "Une erreur est survenue",
+    "retry": "Réessayer",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "add": "Ajouter",
+    "back": "Retour",
+    "seeAll": "Voir tout",
+    "noResults": "Aucun résultat",
+    "login": "Se connecter",
+    "logout": "Se déconnecter",
+    "register": "S'inscrire",
+    "submit": "Valider",
+    "close": "Fermer",
+    "minutes": "min",
+    "servings": "portions",
+    "difficulty": {
+      "easy": "Facile",
+      "medium": "Moyen",
+      "hard": "Difficile"
+    }
+  },
+  "fridge": {
+    "title": "Mon Frigo",
+    "empty": "Votre frigo est vide",
+    "addIngredient": "Ajouter un ingrédient",
+    "search": "Rechercher un ingrédient...",
+    "expiry": "Expiration",
+    "removeAll": "Tout vider"
+  },
+  "suggestions": {
+    "title": "Suggestions",
+    "subtitle": "Recettes basées sur votre frigo",
+    "noMatch": "Aucune recette ne correspond à vos ingrédients",
+    "match": "correspondance"
+  },
+  "discover": {
+    "title": "Découvrir",
+    "subtitle": "Toutes les recettes",
+    "filters": "Filtres",
+    "allCuisines": "Toutes les cuisines",
+    "allDifficulties": "Toutes difficultés",
+    "aiSearch": "Recherche IA",
+    "loadMore": "Charger plus"
+  },
+  "feed": {
+    "title": "Feed",
+    "subtitle": "Recettes de la communauté",
+    "aiToggle": "Recherche IA"
+  },
+  "nutrition": {
+    "title": "Nutrition",
+    "tdee": "Besoin calorique journalier",
+    "consumed": "Consommé aujourd'hui",
+    "target": "Objectif",
+    "protein": "Protéines",
+    "fat": "Lipides",
+    "carbs": "Glucides",
+    "calories": "Calories",
+    "history": "Historique du jour",
+    "profileIncomplete": "Complétez votre profil pour voir votre TDEE",
+    "age": "Âge",
+    "weight": "Poids (kg)",
+    "height": "Taille (cm)",
+    "gender": "Genre",
+    "male": "Homme",
+    "female": "Femme",
+    "activityLevel": "Niveau d'activité",
+    "sedentary": "Sédentaire",
+    "light": "Légèrement actif",
+    "moderate": "Modérément actif",
+    "active": "Très actif",
+    "veryActive": "Extrêmement actif"
+  },
+  "compare": {
+    "title": "Comparer",
+    "subtitle": "Comparez jusqu'à 3 recettes",
+    "addRecipe": "Ajouter une recette",
+    "perServing": "Par portion",
+    "total": "Total",
+    "searchPlaceholder": "Rechercher une recette..."
+  },
+  "shopping": {
+    "title": "Liste de courses",
+    "empty": "Votre liste est vide",
+    "addItem": "Ajouter un article",
+    "clearChecked": "Supprimer les cochés",
+    "newList": "Nouvelle liste"
+  },
+  "profile": {
+    "title": "Mon Profil",
+    "goal": "Objectif",
+    "goalLose": "Manger sain",
+    "goalSport": "Objectif sport",
+    "goalCook": "Cuisiner & partager",
+    "bio": "Bio",
+    "publicProfile": "Profil public",
+    "savedRecipes": "Recettes sauvegardées",
+    "followers": "Abonnés",
+    "following": "Abonnements"
+  },
+  "recipe": {
+    "ingredients": "Ingrédients",
+    "steps": "Étapes",
+    "nutrition": "Nutrition",
+    "calories": "kcal",
+    "protein": "Protéines",
+    "fat": "Lipides",
+    "carbs": "Glucides",
+    "servings": "portions",
+    "difficulty": "Difficulté",
+    "time": "Temps",
+    "like": "J'aime",
+    "liked": "Aimé",
+    "addToList": "Ajouter à ma liste",
+    "share": "Partager",
+    "similar": "Recettes similaires"
+  },
+  "auth": {
+    "loginTitle": "Connexion",
+    "registerTitle": "Créer un compte",
+    "email": "Email",
+    "password": "Mot de passe",
+    "name": "Nom",
+    "forgotPassword": "Mot de passe oublié ?",
+    "noAccount": "Pas de compte ?",
+    "hasAccount": "Déjà un compte ?",
+    "orContinueWith": "Ou continuer avec",
+    "welcomeBack": "Bon retour !"
+  }
+}

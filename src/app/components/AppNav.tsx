@@ -6,13 +6,15 @@ import {
   ChefHat, Lightbulb, Compass, ShoppingCart, User, LogOut, Users, Scale, Activity,
 } from 'lucide-react';
 import { signOut } from '@/lib/auth-client';
+import { useT } from '@/i18n';
+import { LanguageSwitcher } from '@/app/components/LanguageSwitcher';
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
-interface NavItem {
+interface NavItemDef {
   href: string;
-  label: string;
-  shortLabel: string;
+  labelKey: string;
+  shortLabelKey: string;
   icon: React.ComponentType<{ className?: string }>;
 }
 
@@ -24,15 +26,15 @@ interface AppNavProps {
 
 // ─── Navigation items ──────────────────────────────────────────────────────
 
-const NAV_ITEMS: NavItem[] = [
-  { href: '/fridge',      label: 'Mon Frigo',    shortLabel: 'Frigo',   icon: ChefHat },
-  { href: '/suggestions', label: 'Suggestions',  shortLabel: 'Sugg.',   icon: Lightbulb },
-  { href: '/discover',    label: 'Découvrir',    shortLabel: 'Explorer',icon: Compass },
-  { href: '/feed',        label: 'Feed',         shortLabel: 'Feed',    icon: Users },
-  { href: '/nutrition',   label: 'Nutrition',    shortLabel: 'Nutri.',  icon: Activity },
-  { href: '/compare',     label: 'Comparer',     shortLabel: 'Comp.',   icon: Scale },
-  { href: '/shopping',    label: 'Courses',      shortLabel: 'Courses', icon: ShoppingCart },
-  { href: '/profile',     label: 'Profil',       shortLabel: 'Profil',  icon: User },
+const NAV_ITEMS: NavItemDef[] = [
+  { href: '/fridge',      labelKey: 'nav.fridge',      shortLabelKey: 'nav_short.fridge',      icon: ChefHat },
+  { href: '/suggestions', labelKey: 'nav.suggestions', shortLabelKey: 'nav_short.suggestions', icon: Lightbulb },
+  { href: '/discover',    labelKey: 'nav.discover',    shortLabelKey: 'nav_short.discover',    icon: Compass },
+  { href: '/feed',        labelKey: 'nav.feed',        shortLabelKey: 'nav_short.feed',        icon: Users },
+  { href: '/nutrition',   labelKey: 'nav.nutrition',   shortLabelKey: 'nav_short.nutrition',   icon: Activity },
+  { href: '/compare',     labelKey: 'nav.compare',     shortLabelKey: 'nav_short.compare',     icon: Scale },
+  { href: '/shopping',    labelKey: 'nav.shopping',    shortLabelKey: 'nav_short.shopping',    icon: ShoppingCart },
+  { href: '/profile',     labelKey: 'nav.profile',     shortLabelKey: 'nav_short.profile',     icon: User },
 ];
 
 // ─── Sidebar (desktop) ────────────────────────────────────────────────────
@@ -40,6 +42,7 @@ const NAV_ITEMS: NavItem[] = [
 export function AppSidebar({ userName, goalLabel }: AppNavProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const { t } = useT();
 
   const isActive = (href: string): boolean => {
     if (href === '/feed' || href === '/discover' || href === '/compare') return pathname === href;
@@ -69,11 +72,16 @@ export function AppSidebar({ userName, goalLabel }: AppNavProps) {
                 className={`w-full ${active ? 'nav-item-active' : 'nav-item'}`}
               >
                 <Icon className="w-4 h-4 flex-shrink-0" />
-                <span className="flex-1 text-left">{item.label}</span>
+                <span className="flex-1 text-left">{t(item.labelKey)}</span>
               </Link>
             );
           })}
         </nav>
+      </div>
+
+      {/* Language switcher */}
+      <div className="px-4 py-2 border-t border-canvas-200">
+        <LanguageSwitcher />
       </div>
 
       {/* User card */}
@@ -89,7 +97,7 @@ export function AppSidebar({ userName, goalLabel }: AppNavProps) {
           <button
             onClick={() => signOut().then(() => router.replace('/login'))}
             className="text-stone-400 hover:text-red-500 transition-colors p-1 rounded-lg hover:bg-red-50"
-            title="Se déconnecter"
+            title={t('common.logout')}
           >
             <LogOut className="w-4 h-4" />
           </button>
@@ -114,6 +122,7 @@ export function AppMobileHeader({ userName }: { userName: string }) {
             <p className="font-semibold text-stone-900 text-sm leading-tight">{userName}</p>
           </div>
         </Link>
+        <LanguageSwitcher compact />
       </div>
     </header>
   );
@@ -123,6 +132,7 @@ export function AppMobileHeader({ userName }: { userName: string }) {
 
 export function AppMobileNav() {
   const pathname = usePathname();
+  const { t } = useT();
 
   const isActive = (href: string): boolean => {
     if (href === '/feed' || href === '/discover' || href === '/compare') return pathname === href;
@@ -144,7 +154,7 @@ export function AppMobileNav() {
               }`}
             >
               <Icon className="w-5 h-5" />
-              <span className="text-[10px] font-medium">{item.shortLabel}</span>
+              <span className="text-[10px] font-medium">{t(item.shortLabelKey)}</span>
             </Link>
           );
         })}

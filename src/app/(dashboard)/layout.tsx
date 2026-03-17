@@ -1,7 +1,9 @@
-import { headers } from 'next/headers';
+import { headers, cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { DashboardShell } from './DashboardShell';
+import { LocaleProvider, type Locale } from '@/i18n';
+import { getMessages } from '@/i18n/server';
 
 const GOALS: Record<string, string> = {
   lose: 'Manger sain',
@@ -24,6 +26,11 @@ export default async function DashboardLayout({
 
   const userName = session.user.name ?? 'Chef';
 
+  // Read locale from cookie
+  const cookieStore = await cookies();
+  const locale = (cookieStore.get('locale')?.value ?? 'fr') as Locale;
+  const messages = getMessages(locale);
+
   // Fetch profile goal server-side
   let goalLabel = '';
   try {
@@ -43,12 +50,14 @@ export default async function DashboardLayout({
   }
 
   return (
-    <DashboardShell
-      userName={userName}
-      goalLabel={goalLabel}
-      userEmail={session.user.email}
-    >
-      {children}
-    </DashboardShell>
+    <LocaleProvider locale={locale} messages={messages}>
+      <DashboardShell
+        userName={userName}
+        goalLabel={goalLabel}
+        userEmail={session.user.email}
+      >
+        {children}
+      </DashboardShell>
+    </LocaleProvider>
   );
 }
