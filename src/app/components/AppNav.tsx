@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
-  ChefHat, Lightbulb, Compass, ShoppingCart, User, LogOut, Users, Scale, Activity,
+  ChefHat, Lightbulb, Compass, ShoppingCart, User, LogOut, Users, Scale, Activity, Utensils,
 } from 'lucide-react';
 import { signOut } from '@/lib/auth-client';
 import { useT } from '@/i18n';
@@ -110,19 +110,23 @@ export function AppSidebar({ userName, goalLabel }: AppNavProps) {
 // ─── Mobile header ─────────────────────────────────────────────────────────
 
 export function AppMobileHeader({ userName }: { userName: string }) {
+  const initials = userName
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0].toUpperCase())
+    .join('');
+
   return (
-    <header className="lg:hidden bg-white px-4 py-3 border-b border-canvas-200 sticky top-0 z-10">
+    <header className="lg:hidden bg-stone-800 px-4 py-3 sticky top-0 z-10">
       <div className="flex items-center justify-between">
         <Link href="/fridge" className="flex items-center gap-2.5">
-          <div className="w-8 h-8 bg-brand-500 rounded-lg flex items-center justify-center">
-            <ChefHat className="w-4 h-4 text-white" />
-          </div>
-          <div>
-            <p className="text-[10px] text-stone-400 leading-none">Bonjour</p>
-            <p className="font-semibold text-stone-900 text-sm leading-tight">{userName}</p>
-          </div>
+          <Utensils className="w-5 h-5 text-brand-500" />
+          <span className="font-semibold text-white text-sm">CuisineConnect</span>
         </Link>
-        <LanguageSwitcher compact />
+        <div className="w-9 h-9 rounded-full bg-brand-500 flex items-center justify-center flex-shrink-0">
+          <span className="text-white font-bold text-sm">{initials}</span>
+        </div>
       </div>
     </header>
   );
@@ -132,7 +136,6 @@ export function AppMobileHeader({ userName }: { userName: string }) {
 
 export function AppMobileNav() {
   const pathname = usePathname();
-  const { t } = useT();
 
   const isActive = (href: string): boolean => {
     if (href === '/feed' || href === '/discover' || href === '/compare') return pathname === href;
@@ -140,8 +143,8 @@ export function AppMobileNav() {
   };
 
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur border-t border-canvas-200 safe-area-inset-bottom z-20">
-      <div className="flex overflow-x-auto [&::-webkit-scrollbar]:hidden px-1 py-2 gap-0.5">
+    <nav className="lg:hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-20">
+      <div className="flex items-center gap-1 bg-canvas-50 rounded-2xl shadow-float px-2 py-2 overflow-x-auto [&::-webkit-scrollbar]:hidden">
         {NAV_ITEMS.map((item) => {
           const active = isActive(item.href);
           const Icon = item.icon;
@@ -149,12 +152,13 @@ export function AppMobileNav() {
             <Link
               key={item.href}
               href={item.href}
-              className={`relative flex flex-col flex-shrink-0 items-center gap-0.5 px-2.5 py-1.5 rounded-xl transition-all ${
-                active ? 'text-brand-500' : 'text-stone-400 hover:text-stone-600'
+              className={`flex-shrink-0 flex items-center justify-center w-11 h-11 rounded-xl transition-all ${
+                active
+                  ? 'bg-brand-500/15 text-brand-500'
+                  : 'text-stone-400 hover:text-stone-600 hover:bg-stone-100'
               }`}
             >
               <Icon className="w-5 h-5" />
-              <span className="text-[10px] font-medium">{t(item.shortLabelKey)}</span>
             </Link>
           );
         })}
