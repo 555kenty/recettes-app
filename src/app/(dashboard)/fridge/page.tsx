@@ -147,10 +147,21 @@ export default function FridgePage() {
   const loadNutrition = useCallback(async () => {
     setNutritionLoading(true);
     try {
-      const res = await fetch('/api/nutrition/daily');
-      if (res.ok) {
-        const data = await res.json();
-        // API returns { consumed: { kcal, proteins, fats, carbs }, target: { kcal, proteins, fats, carbs } }
+      const [dailyRes, profileRes] = await Promise.all([
+        fetch('/api/nutrition/daily'),
+        session?.user?.id ? fetch(`/api/users/${session.user.id}`) : Promise.resolve(null),
+      ]);
+
+      let imc: number | null = null;
+      if (profileRes?.ok) {
+        const { user } = await profileRes.json();
+        const w = user?.profile?.weight;
+        const h = user?.profile?.height;
+        if (w && h) imc = Math.round((w / Math.pow(h / 100, 2)) * 10) / 10;
+      }
+
+      if (dailyRes.ok) {
+        const data = await dailyRes.json();
         setNutrition({
           calories: data.consumed?.kcal ?? 0,
           proteins: data.consumed?.proteins ?? 0,
@@ -164,13 +175,13 @@ export default function FridgePage() {
           },
           tdee: data.target?.kcal ?? 2000,
           goal: data.goal ?? null,
-          imc: null,
+          imc,
           imcStatus: null,
         });
       }
     } catch {}
     setNutritionLoading(false);
-  }, []);
+  }, [session?.user?.id]);
 
   // ── Load suggestions ─────────────────────────────────────────────────────
 

@@ -2,8 +2,10 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import { useState } from 'react';
 import {
-  ChefHat, Lightbulb, Compass, ShoppingCart, User, LogOut, Users, Scale, Activity, Utensils,
+  ChefHat, Lightbulb, Compass, ShoppingCart, User, LogOut, Users, Scale, Activity,
+  Utensils, MoreHorizontal, X,
 } from 'lucide-react';
 import { signOut } from '@/lib/auth-client';
 import { useT } from '@/i18n';
@@ -25,6 +27,14 @@ interface AppNavProps {
 }
 
 // ─── Navigation items ──────────────────────────────────────────────────────
+
+const PLUS_ITEMS = [
+  { href: '/suggestions', label: 'Suggestions', icon: Lightbulb },
+  { href: '/feed',        label: 'Communauté',  icon: Users },
+  { href: '/nutrition',   label: 'Nutrition',   icon: Activity },
+  { href: '/compare',     label: 'Comparer',    icon: Scale },
+  { href: '/shopping',    label: 'Courses',     icon: ShoppingCart },
+];
 
 const NAV_ITEMS: NavItemDef[] = [
   { href: '/fridge',      labelKey: 'nav.fridge',      shortLabelKey: 'nav_short.fridge',      icon: ChefHat },
@@ -124,8 +134,11 @@ export function AppMobileHeader({ userName }: { userName: string }) {
           <Utensils className="w-5 h-5 text-brand-500" />
           <span className="font-semibold text-white text-sm">CuisineConnect</span>
         </Link>
-        <div className="w-9 h-9 rounded-full bg-brand-500 flex items-center justify-center flex-shrink-0">
-          <span className="text-white font-bold text-sm">{initials}</span>
+        <div className="flex items-center gap-2">
+          <LanguageSwitcher compact />
+          <div className="w-9 h-9 rounded-full bg-brand-500 flex items-center justify-center flex-shrink-0">
+            <span className="text-white font-bold text-sm">{initials}</span>
+          </div>
         </div>
       </div>
     </header>
@@ -136,33 +149,92 @@ export function AppMobileHeader({ userName }: { userName: string }) {
 
 export function AppMobileNav() {
   const pathname = usePathname();
+  const [plusOpen, setPlusOpen] = useState(false);
 
   const isActive = (href: string): boolean => {
     if (href === '/feed' || href === '/discover' || href === '/compare') return pathname === href;
     return pathname.startsWith(href);
   };
 
+  const plusActive = PLUS_ITEMS.some((i) => isActive(i.href));
+
   return (
-    <nav className="lg:hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-20">
-      <div className="flex items-center gap-1 bg-canvas-50 rounded-2xl shadow-float px-2 py-2 overflow-x-auto [&::-webkit-scrollbar]:hidden">
-        {NAV_ITEMS.map((item) => {
-          const active = isActive(item.href);
-          const Icon = item.icon;
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`flex-shrink-0 flex items-center justify-center w-11 h-11 rounded-xl transition-all ${
-                active
-                  ? 'bg-brand-500/15 text-brand-500'
-                  : 'text-stone-400 hover:text-stone-600 hover:bg-stone-100'
-              }`}
-            >
-              <Icon className="w-5 h-5" />
-            </Link>
-          );
-        })}
-      </div>
-    </nav>
+    <>
+      {/* Plus overlay */}
+      {plusOpen && (
+        <div
+          className="lg:hidden fixed inset-0 z-30"
+          onClick={() => setPlusOpen(false)}
+        >
+          <div
+            className="absolute bottom-20 left-4 right-4 bg-canvas-50 rounded-2xl shadow-float p-2 grid grid-cols-5 gap-0.5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {PLUS_ITEMS.map((item) => {
+              const active = isActive(item.href);
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setPlusOpen(false)}
+                  className={`flex flex-col items-center gap-1 py-3 rounded-xl transition-all ${
+                    active ? 'bg-brand-500/15 text-brand-500' : 'text-stone-500 hover:bg-stone-100'
+                  }`}
+                >
+                  <Icon className="w-5 h-5" />
+                  <span className="text-[10px] font-medium">{item.label}</span>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Main nav */}
+      <nav className="lg:hidden fixed bottom-4 left-4 right-4 z-40">
+        <div className="flex items-center gap-0.5 bg-canvas-50 rounded-2xl shadow-float px-1.5 py-1.5">
+          {/* Profile */}
+          <Link
+            href="/profile"
+            className={`flex-1 flex items-center justify-center py-2.5 rounded-xl transition-all ${
+              isActive('/profile') ? 'bg-brand-500/15 text-brand-500' : 'text-stone-400 hover:text-stone-600 hover:bg-stone-100'
+            }`}
+          >
+            <User className="w-5 h-5" />
+          </Link>
+
+          {/* Découvrir */}
+          <Link
+            href="/discover"
+            className={`flex-1 flex items-center justify-center py-2.5 rounded-xl transition-all ${
+              isActive('/discover') ? 'bg-brand-500/15 text-brand-500' : 'text-stone-400 hover:text-stone-600 hover:bg-stone-100'
+            }`}
+          >
+            <Compass className="w-5 h-5" />
+          </Link>
+
+          {/* Fridge — central */}
+          <Link
+            href="/fridge"
+            className={`flex-1 flex items-center justify-center py-2.5 rounded-xl transition-all ${
+              isActive('/fridge') ? 'bg-brand-500/15 text-brand-500' : 'text-stone-400 hover:text-stone-600 hover:bg-stone-100'
+            }`}
+          >
+            <ChefHat className="w-5 h-5" />
+          </Link>
+
+          {/* Plus */}
+          <button
+            onClick={() => setPlusOpen((o) => !o)}
+            className={`flex-1 flex items-center justify-center py-2.5 rounded-xl transition-all ${
+              plusActive || plusOpen ? 'bg-brand-500/15 text-brand-500' : 'text-stone-400 hover:text-stone-600 hover:bg-stone-100'
+            }`}
+          >
+            {plusOpen ? <X className="w-5 h-5" /> : <MoreHorizontal className="w-5 h-5" />}
+          </button>
+        </div>
+      </nav>
+    </>
   );
 }

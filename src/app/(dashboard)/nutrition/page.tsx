@@ -8,6 +8,7 @@ import {
 import {
   Activity, Flame, Beef, Droplets, Wheat,
   AlertTriangle, CheckCircle2, ChefHat, Save, Loader2, Info,
+  ChevronLeft, ChevronRight, Calendar,
 } from 'lucide-react';
 import { useSession } from '@/lib/auth-client';
 import Link from 'next/link';
@@ -67,6 +68,174 @@ const ACTIVITY_OPTIONS = [
   { value: 'active', label: 'Très actif (6–7j / semaine)' },
   { value: 'very_active', label: 'Extrêmement actif (2x/jour)' },
 ];
+
+// ─── Calendar types ───────────────────────────────────────────────────────────
+
+interface CalendarEntry {
+  recipeId: string;
+  recipeName: string;
+  recipeImage: string | null;
+  calories: number | null;
+  viewedAt: string;
+}
+
+// ─── Calendar component ───────────────────────────────────────────────────────
+
+function NutritionCalendar() {
+  const now = new Date();
+  const [year, setYear] = useState(now.getFullYear());
+  const [month, setMonth] = useState(now.getMonth() + 1); // 1-indexed
+  const [days, setDays] = useState<Record<string, CalendarEntry[]>>({});
+  const [calLoading, setCalLoading] = useState(false);
+  const [selectedDay, setSelectedDay] = useState<string | null>(null);
+
+  const monthKey = `${year}-${String(month).padStart(2, '0')}`;
+
+  useEffect(() => {
+    setCalLoading(true);
+    setSelectedDay(null);
+    fetch(`/api/nutrition/history?month=${monthKey}`)
+      .then((r) => r.json())
+      .then(({ days: d }) => { setDays(d ?? {}); setCalLoading(false); })
+      .catch(() => setCalLoading(false));
+  }, [monthKey]);
+
+  const prevMonth = () => {
+    if (month === 1) { setYear((y) => y - 1); setMonth(12); }
+    else setMonth((m) => m - 1);
+  };
+  const nextMonth = () => {
+    if (month === 12) { setYear((y) => y + 1); setMonth(1); }
+    else setMonth((m) => m + 1);
+  };
+
+  // Build calendar grid
+  const firstDay = new Date(year, month - 1, 1).getDay(); // 0=Sun
+  const daysInMonth = new Date(year, month, 0).getDate();
+  // Shift so Monday = index 0
+  const startOffset = (firstDay + 6) % 7;
+  const cells: (number | null)[] = [
+    ...Array(startOffset).fill(null),
+    ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
+  ];
+  // Pad to complete last row
+  while (cells.length % 7 !== 0) cells.push(null);
+
+  const monthLabel = new Date(year, month - 1).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+  const todayKey = now.toISOString().split('T')[0];
+
+  const selectedEntries = selectedDay ? (days[selectedDay] ?? []) : [];
+  const totalKcal = selectedEntries.reduce((s, e) => s + (e.calories ?? 0), 0);
+
+  return (
+    <div className="bg-white rounded-2xl border border-canvas-200 shadow-card p-5">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center gap-2">
+          <Calendar className="w-4 h-4 text-brand-500" />
+          <h2 className="font-serif text-lg font-bold text-stone-900">Calendrier nutritionnel</h2>
+        </div>
+        <div className="flex items-center gap-2">
+          <button onClick={prevMonth} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-canvas-100 transition-colors">
+            <ChevronLeft className="w-4 h-4 text-stone-500" />
+          </button>
+          <span className="text-sm font-semibold text-stone-700 capitalize min-w-[120px] text-center">{monthLabel}</span>
+          <button
+            onClick={nextMonth}
+            disabled={year === now.getFullYear() && month === now.getMonth() + 1}
+            className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-canvas-100 transition-colors disabled:opacity-30"
+          >
+            <ChevronRight className="w-4 h-4 text-stone-500" />
+          </button>
+        </div>
+      </div>
+
+      {/* Day labels */}
+      <div className="grid grid-cols-7 mb-1">
+        {['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((d, i) => (
+          <div key={i} className="text-center text-[11px] font-semibold text-stone-400 py-1">{d}</div>
+        ))}
+      </div>
+
+      {/* Calendar grid */}
+      {calLoading ? (
+        <div className="flex justify-center py-10"><Loader2 className="w-5 h-5 text-brand-500 animate-spin" /></div>
+      ) : (
+        <div className="grid grid-cols-7 gap-0.5">
+          {cells.map((day, i) => {
+            if (day === null) return <div key={i} />;
+            const dayKey = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            const hasEntries = !!days[dayKey]?.length;
+            const isToday = dayKey === todayKey;
+            const isSelected = dayKey === selectedDay;
+            return (
+              <button
+                key={i}
+                onClick={() => setSelectedDay(isSelected ? null : dayKey)}
+                className={`relative flex flex-col items-center justify-center rounded-xl py-2 transition-all text-sm font-medium
+                  ${isSelected ? 'bg-brand-500 text-white' : isToday ? 'bg-brand-50 text-brand-600' : 'text-stone-700 hover:bg-canvas-50'}
+                `}
+              >
+                {day}
+                {hasEntries && (
+                  <span className={`w-1.5 h-1.5 rounded-full mt-0.5 ${isSelected ? 'bg-white/70' : 'bg-brand-500'}`} />
+                )}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Selected day detail */}
+      {selectedDay && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.2 }}
+          className="mt-4 pt-4 border-t border-canvas-100"
+        >
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-sm font-semibold text-stone-800">
+              {new Date(selectedDay + 'T12:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
+            </p>
+            {totalKcal > 0 && (
+              <span className="text-xs font-bold text-brand-500 bg-brand-50 px-2 py-0.5 rounded-full">
+                ~{totalKcal} kcal
+              </span>
+            )}
+          </div>
+
+          {selectedEntries.length === 0 ? (
+            <p className="text-sm text-stone-400 text-center py-4">Aucune recette ce jour-là</p>
+          ) : (
+            <div className="space-y-2">
+              {selectedEntries.map((entry) => (
+                <Link
+                  key={entry.recipeId}
+                  href={`/recipes/${entry.recipeId}`}
+                  className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-canvas-50 transition-colors group"
+                >
+                  <div className="w-10 h-10 rounded-lg bg-stone-100 overflow-hidden flex-shrink-0">
+                    {entry.recipeImage
+                      ? <img src={entry.recipeImage} alt={entry.recipeName} className="w-full h-full object-cover" />
+                      : <div className="flex items-center justify-center h-full"><ChefHat className="w-4 h-4 text-stone-300" /></div>
+                    }
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-stone-800 truncate group-hover:text-brand-500 transition-colors">{entry.recipeName}</p>
+                    {entry.calories && (
+                      <p className="text-xs text-stone-400">{entry.calories} kcal</p>
+                    )}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </motion.div>
+      )}
+    </div>
+  );
+}
 
 // ─── Stagger variants ─────────────────────────────────────────────────────────
 
@@ -412,6 +581,15 @@ export default function NutritionPage() {
           </motion.div>
         </div>
       )}
+
+      {/* ── Calendar ── */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.25 }}
+      >
+        <NutritionCalendar />
+      </motion.div>
 
       {/* ── History card ── */}
       {!loading && dailyData && dailyData.history.length > 0 && (

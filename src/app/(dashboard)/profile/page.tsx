@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import {
   Plus, Globe, ArrowRight, LogOut, Loader2, Heart, Clock, ChefHat,
+  Save, CheckCircle2,
 } from 'lucide-react';
 import { useSession, signOut } from '@/lib/auth-client';
 
@@ -17,7 +18,23 @@ const GOALS: Record<string, string> = {
   cook: 'Cuisiner & partager',
 };
 
+const ACTIVITY_OPTIONS = [
+  { value: 'sedentary', label: 'Sédentaire' },
+  { value: 'light', label: 'Légèrement actif' },
+  { value: 'moderate', label: 'Modérément actif' },
+  { value: 'active', label: 'Très actif' },
+  { value: 'very_active', label: 'Extrêmement actif' },
+];
+
 // ─── Types ─────────────────────────────────────────────────────────────────
+
+interface ProfileForm {
+  age: string;
+  weight: string;
+  height: string;
+  gender: string;
+  activityLevel: string;
+}
 
 interface LikedRecipe {
   id: string;
@@ -40,6 +57,11 @@ export default function ProfilePage() {
   const [shoppingCount, setShoppingCount] = useState(0);
   const [likedRecipes, setLikedRecipes] = useState<LikedRecipe[]>([]);
   const [likedLoading, setLikedLoading] = useState(true);
+  const [profileForm, setProfileForm] = useState<ProfileForm>({
+    age: '', weight: '', height: '', gender: '', activityLevel: '',
+  });
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
 
   const userName = session?.user.name ?? 'Chef';
 
@@ -56,6 +78,15 @@ export default function ProfilePage() {
       if (profileRes.ok) {
         const { user } = await profileRes.json();
         if (user?.profile?.goal) setGoalLabel(GOALS[user.profile.goal] ?? '');
+        if (user?.profile) {
+          setProfileForm({
+            age: user.profile.age?.toString() ?? '',
+            weight: user.profile.weight?.toString() ?? '',
+            height: user.profile.height?.toString() ?? '',
+            gender: user.profile.gender ?? '',
+            activityLevel: user.profile.activityLevel ?? '',
+          });
+        }
       }
       if (pantryRes.ok) {
         const { pantry } = await pantryRes.json();
@@ -71,6 +102,28 @@ export default function ProfilePage() {
     } catch {}
     setLoading(false);
   }, [session]);
+
+  const saveProfile = async () => {
+    if (!session?.user.id) return;
+    setSaving(true);
+    try {
+      await fetch(`/api/users/${session.user.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          age: profileForm.age ? parseInt(profileForm.age) : null,
+          weight: profileForm.weight ? parseFloat(profileForm.weight) : null,
+          height: profileForm.height ? parseFloat(profileForm.height) : null,
+          gender: profileForm.gender || null,
+          activityLevel: profileForm.activityLevel || null,
+        }),
+      });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const loadLikedRecipes = useCallback(async () => {
     if (!session) return;
@@ -152,6 +205,76 @@ export default function ProfilePage() {
           >
             <LogOut className="w-4 h-4 text-red-500" />
             <span className="text-sm font-medium text-red-500">Se déconnecter</span>
+          </button>
+        </div>
+
+        {/* Profil physique */}
+        <div className="bg-white rounded-2xl border border-canvas-200 shadow-card p-5 mb-5">
+          <h2 className="font-serif text-lg font-bold text-stone-900 mb-4">Mon profil physique</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
+            <div>
+              <label className="block text-xs font-medium text-stone-500 mb-1.5">Âge</label>
+              <input
+                type="number" min="10" max="100"
+                value={profileForm.age}
+                onChange={(e) => setProfileForm((p) => ({ ...p, age: e.target.value }))}
+                placeholder="ans"
+                className="input-base w-full text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-stone-500 mb-1.5">Poids (kg)</label>
+              <input
+                type="number" min="30" max="300" step="0.1"
+                value={profileForm.weight}
+                onChange={(e) => setProfileForm((p) => ({ ...p, weight: e.target.value }))}
+                placeholder="kg"
+                className="input-base w-full text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-stone-500 mb-1.5">Taille (cm)</label>
+              <input
+                type="number" min="100" max="250"
+                value={profileForm.height}
+                onChange={(e) => setProfileForm((p) => ({ ...p, height: e.target.value }))}
+                placeholder="cm"
+                className="input-base w-full text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-stone-500 mb-1.5">Genre</label>
+              <select
+                value={profileForm.gender}
+                onChange={(e) => setProfileForm((p) => ({ ...p, gender: e.target.value }))}
+                className="input-base w-full text-sm"
+              >
+                <option value="">—</option>
+                <option value="male">Homme</option>
+                <option value="female">Femme</option>
+              </select>
+            </div>
+            <div className="col-span-2 sm:col-span-2">
+              <label className="block text-xs font-medium text-stone-500 mb-1.5">Niveau d&apos;activité</label>
+              <select
+                value={profileForm.activityLevel}
+                onChange={(e) => setProfileForm((p) => ({ ...p, activityLevel: e.target.value }))}
+                className="input-base w-full text-sm"
+              >
+                <option value="">—</option>
+                {ACTIVITY_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <button
+            onClick={saveProfile}
+            disabled={saving}
+            className="btn-primary flex items-center gap-2 text-sm px-4 py-2"
+          >
+            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : saved ? <CheckCircle2 className="w-4 h-4" /> : <Save className="w-4 h-4" />}
+            {saved ? 'Sauvegardé !' : 'Sauvegarder'}
           </button>
         </div>
 
