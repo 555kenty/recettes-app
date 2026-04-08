@@ -150,7 +150,23 @@ export default function FridgePage() {
       const res = await fetch('/api/nutrition/daily');
       if (res.ok) {
         const data = await res.json();
-        setNutrition(data);
+        // API returns { consumed: { kcal, proteins, fats, carbs }, target: { kcal, proteins, fats, carbs } }
+        setNutrition({
+          calories: data.consumed?.kcal ?? 0,
+          proteins: data.consumed?.proteins ?? 0,
+          fats: data.consumed?.fats ?? 0,
+          carbs: data.consumed?.carbs ?? 0,
+          targets: {
+            calories: data.target?.kcal ?? 2000,
+            proteins: data.target?.proteins ?? 150,
+            fats: data.target?.fats ?? 70,
+            carbs: data.target?.carbs ?? 250,
+          },
+          tdee: data.target?.kcal ?? 2000,
+          goal: data.goal ?? null,
+          imc: null,
+          imcStatus: null,
+        });
       }
     } catch {}
     setNutritionLoading(false);

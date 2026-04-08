@@ -15,6 +15,10 @@ function createPrismaClient() {
   const pool = new pg.Pool({
     connectionString: process.env.DATABASE_URL,
     max: 1,
+    // Close idle connections after 10s so Supabase pooler doesn't kill them first
+    // (prevents XX000 "Tenant or user not found" on stale connections)
+    idleTimeoutMillis: 10000,
+    connectionTimeoutMillis: 10000,
     ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
   });
 
