@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Search, X, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { RecipeCard } from '@/app/components/RecipeCard';
 
 // ─── Cuisines avec icônes SVG personnalisées ─────────────────────────────────
@@ -63,11 +64,10 @@ function CuisineCard({ cuisine, active, onToggle }: {
       className="flex flex-col items-center gap-1.5 flex-shrink-0 group focus:outline-none"
       aria-pressed={active}
     >
-      {/* Conteneur icône cuisine */}
-      <div className={`relative w-[62px] h-[62px] rounded-2xl overflow-hidden transition-all duration-200 bg-white ${
+      <div className={`relative w-[60px] h-[60px] rounded-2xl overflow-hidden transition-all duration-200 bg-white ${
         active
-          ? 'ring-[2.5px] ring-brand-500 ring-offset-2 shadow-lg scale-105'
-          : 'ring-1 ring-black/5 shadow-sm group-hover:scale-105 group-hover:shadow-md group-hover:ring-black/10'
+          ? 'ring-[2.5px] ring-brand-500 ring-offset-2 shadow-hover scale-105'
+          : 'ring-1 ring-canvas-200 shadow-card group-hover:scale-105 group-hover:shadow-hover'
       }`}>
         <img
           src={cuisine.icon}
@@ -76,18 +76,31 @@ function CuisineCard({ cuisine, active, onToggle }: {
           loading="lazy"
           draggable={false}
         />
-        {/* Overlay sélectionné */}
         {active && (
           <div className="absolute inset-0 bg-brand-500/10 rounded-2xl" />
         )}
       </div>
-      {/* Nom */}
-      <span className={`text-[11px] font-medium text-center leading-tight max-w-[62px] truncate transition-colors ${
-        active ? 'text-brand-600 font-semibold' : 'text-stone-500 group-hover:text-stone-700'
+      <span className={`text-[11px] font-medium text-center leading-tight max-w-[60px] truncate transition-colors ${
+        active ? 'text-brand-600 font-semibold' : 'text-warm-700/60 group-hover:text-warm-700'
       }`}>
         {cuisine.label}
       </span>
     </button>
+  );
+}
+
+// ─── Skeleton card ───────────────────────────────────────────────────────────
+
+function SkeletonCard() {
+  return (
+    <div className="rounded-2xl overflow-hidden border border-canvas-200 animate-pulse shadow-card" style={{ background: '#FFF8F0' }}>
+      <div className="aspect-[4/3] bg-canvas-200" />
+      <div className="p-4 space-y-2.5">
+        <div className="h-3 bg-canvas-200 rounded-full w-1/3" />
+        <div className="h-4 bg-canvas-200 rounded-full w-5/6" />
+        <div className="h-3 bg-canvas-200 rounded-full w-2/3" />
+      </div>
+    </div>
   );
 }
 
@@ -155,29 +168,29 @@ export function RecipeBrowser({ communityOnly = false, pageTitle }: RecipeBrowse
   return (
     <>
       {/* ── Header sticky ── */}
-      <div className="bg-white/95 backdrop-blur-sm border-b border-canvas-200 sticky top-0 z-10">
+      <div className="bg-canvas-100/95 backdrop-blur-sm border-b border-canvas-200 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
 
           {/* Barre de recherche */}
           <div className="flex items-center gap-2 pt-3 pb-2">
             <div className="flex-1 relative">
               {aiSearch
-                ? <Sparkles className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-violet-500" />
-                : <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
+                ? <Sparkles className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-500 animate-pulse" />
+                : <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-warm-700/40" />
               }
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder={aiSearch ? 'Décrivez ce que vous cherchez...' : 'Rechercher un plat, un ingrédient...'}
-                className={`w-full pl-10 pr-9 py-2.5 rounded-full text-sm border transition-all focus:outline-none focus:ring-2 ${
+                placeholder={aiSearch ? 'Décrivez ce que vous cherchez...' : 'Un plat, un ingrédient...'}
+                className={`w-full pl-10 pr-9 py-2.5 rounded-xl text-sm border transition-all focus:outline-none focus:ring-2 ${
                   aiSearch
-                    ? 'bg-violet-50 border-violet-200 focus:border-violet-400 focus:ring-violet-500/10'
-                    : 'bg-canvas-100 border-transparent focus:border-brand-400 focus:ring-brand-500/10 focus:bg-white'
+                    ? 'bg-brand-50 border-brand-200 focus:border-brand-400 focus:ring-brand-500/10'
+                    : 'bg-white border-canvas-200 shadow-card focus:border-brand-400 focus:ring-brand-500/10'
                 }`}
               />
               {search && (
-                <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600">
+                <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-warm-700/40 hover:text-warm-700">
                   <X className="w-3.5 h-3.5" />
                 </button>
               )}
@@ -187,21 +200,24 @@ export function RecipeBrowser({ communityOnly = false, pageTitle }: RecipeBrowse
             <button
               onClick={() => { setAiSearch(!aiSearch); setPage(1); setRecipes([]); }}
               title={aiSearch ? 'Désactiver la recherche IA' : 'Recherche sémantique IA'}
-              className={`flex items-center gap-1.5 px-3 py-2.5 rounded-full border text-sm font-medium transition-all flex-shrink-0 ${
-                aiSearch ? 'bg-violet-600 text-white border-violet-600 shadow-md' : 'bg-white text-stone-500 border-canvas-200 hover:border-violet-300 hover:text-violet-500'
+              className={`flex items-center gap-1.5 px-3 py-2.5 rounded-xl border text-sm font-semibold transition-all flex-shrink-0 ${
+                aiSearch
+                  ? 'text-white border-transparent shadow-md'
+                  : 'bg-white text-warm-700/60 border-canvas-200 hover:border-brand-200 hover:text-brand-500'
               }`}
+              style={aiSearch ? { background: 'linear-gradient(135deg, #C4583A, #D4930D)', minWidth: 130 } : { minWidth: 130 }}
             >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline text-xs">IA</span>
+              <Sparkles className={`w-3.5 h-3.5 ${aiSearch ? 'animate-pulse' : ''}`} />
+              <span className="text-xs">{aiSearch ? 'IA activée' : 'Recherche IA'}</span>
             </button>
 
             {/* Difficulté */}
             <button
               onClick={() => setShowDifficultyFilter(!showDifficultyFilter)}
-              className={`relative flex items-center gap-1 px-3 py-2.5 rounded-full border text-xs font-medium transition-all flex-shrink-0 ${
+              className={`relative flex items-center gap-1 px-3 py-2.5 rounded-xl border text-xs font-medium transition-all flex-shrink-0 ${
                 filters.difficulty
-                  ? 'bg-stone-900 text-white border-stone-900'
-                  : 'bg-white text-stone-600 border-canvas-200 hover:border-stone-300'
+                  ? 'bg-night text-white border-night'
+                  : 'bg-white text-warm-700 border-canvas-200 hover:border-canvas-200 shadow-card'
               }`}
             >
               <span>{filters.difficulty || 'Niveau'}</span>
@@ -211,15 +227,15 @@ export function RecipeBrowser({ communityOnly = false, pageTitle }: RecipeBrowse
 
           {/* Filtre difficulté dropdown */}
           {showDifficultyFilter && (
-            <div className="flex gap-2 pb-2 pt-1 flex-wrap border-t border-canvas-100">
+            <div className="flex gap-2 pb-2 pt-1 flex-wrap border-t border-canvas-200">
               {DIFFICULTIES.map((d) => (
                 <button
                   key={d}
                   onClick={() => { setFilters((f) => ({ ...f, difficulty: f.difficulty === d ? '' : d })); setShowDifficultyFilter(false); }}
-                  className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all border ${
+                  className={`px-4 py-1.5 rounded-xl text-xs font-medium transition-all border ${
                     filters.difficulty === d
-                      ? 'bg-stone-900 text-white border-stone-900'
-                      : 'bg-canvas-50 text-stone-600 border-canvas-200 hover:bg-canvas-100'
+                      ? 'bg-night text-white border-night'
+                      : 'bg-canvas-50 text-warm-700 border-canvas-200 hover:bg-canvas-100'
                   }`}
                 >
                   {d}
@@ -228,7 +244,7 @@ export function RecipeBrowser({ communityOnly = false, pageTitle }: RecipeBrowse
               {filters.difficulty && (
                 <button
                   onClick={() => { setFilters((f) => ({ ...f, difficulty: '' })); setShowDifficultyFilter(false); }}
-                  className="px-3 py-1.5 rounded-full text-xs text-red-500 border border-red-100 hover:bg-red-50 flex items-center gap-1"
+                  className="px-3 py-1.5 rounded-xl text-xs text-brand-500 border border-brand-100 hover:bg-brand-50 flex items-center gap-1"
                 >
                   <X className="w-3 h-3" /> Effacer
                 </button>
@@ -252,23 +268,23 @@ export function RecipeBrowser({ communityOnly = false, pageTitle }: RecipeBrowse
           {(filters.difficulty || search) && (
             <div className="flex items-center gap-2 pb-2 flex-wrap">
               {filters.difficulty && (
-                <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-stone-100 text-stone-600 text-xs font-medium rounded-full">
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-canvas-200 text-warm-700 text-xs font-medium rounded-full">
                   {filters.difficulty}
-                  <button onClick={() => setFilters((f) => ({ ...f, difficulty: '' }))} className="hover:text-red-500 ml-0.5">
+                  <button onClick={() => setFilters((f) => ({ ...f, difficulty: '' }))} className="hover:text-brand-500 ml-0.5">
                     <X className="w-3 h-3" />
                   </button>
                 </span>
               )}
               {search && (
-                <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-stone-100 text-stone-600 text-xs font-medium rounded-full">
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-canvas-200 text-warm-700 text-xs font-medium rounded-full">
                   &ldquo;{search}&rdquo;
-                  <button onClick={() => setSearch('')} className="hover:text-red-500 ml-0.5">
+                  <button onClick={() => setSearch('')} className="hover:text-brand-500 ml-0.5">
                     <X className="w-3 h-3" />
                   </button>
                 </span>
               )}
               {activeFiltersCount > 1 && (
-                <button onClick={clearFilters} className="text-xs text-red-400 hover:text-red-500 font-medium">
+                <button onClick={clearFilters} className="text-xs text-brand-500 hover:text-brand-600 font-medium">
                   Tout effacer
                 </button>
               )}
@@ -280,15 +296,15 @@ export function RecipeBrowser({ communityOnly = false, pageTitle }: RecipeBrowse
       {/* ── Contenu ── */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-7">
         <div className="mb-6">
-          <h1 className="font-serif text-2xl font-bold text-stone-900">{defaultTitle}</h1>
+          <h1 className="font-serif text-2xl font-bold text-night">{defaultTitle}</h1>
           {recipes.length > 0 && (
-            <p className="text-stone-400 text-sm mt-0.5">{recipes.length} recette{recipes.length > 1 ? 's' : ''}</p>
+            <p className="text-warm-700/50 text-sm mt-0.5">{recipes.length} recette{recipes.length > 1 ? 's' : ''}</p>
           )}
         </div>
 
         {recipes.length === 0 && !loading ? (
           <div className="text-center py-24">
-            <p className="text-stone-400 text-lg mb-4">Aucune recette trouvée</p>
+            <p className="text-warm-700/50 text-lg mb-4">Aucune recette trouvée</p>
             {activeFiltersCount > 0 && (
               <button onClick={clearFilters} className="text-brand-500 hover:text-brand-600 text-sm font-medium">
                 Effacer les filtres
@@ -296,19 +312,24 @@ export function RecipeBrowser({ communityOnly = false, pageTitle }: RecipeBrowse
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-            {recipes.map((r) => <RecipeCard key={r.id} recipe={r} />)}
-            {loading && Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="bg-white rounded-2xl overflow-hidden border border-canvas-200 animate-pulse shadow-card">
-                <div className="aspect-[4/3] bg-canvas-100" />
-                <div className="p-4 space-y-2.5">
-                  <div className="h-3 bg-canvas-100 rounded-full w-1/3" />
-                  <div className="h-4 bg-canvas-100 rounded-full w-5/6" />
-                  <div className="h-3 bg-canvas-100 rounded-full w-2/3" />
-                </div>
-              </div>
+          <motion.div
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5"
+            initial="hidden"
+            animate="visible"
+            variants={{ visible: { transition: { staggerChildren: 0.04 } } }}
+          >
+            {recipes.map((r) => (
+              <motion.div
+                key={r.id}
+                variants={{ hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: 'easeOut' } } }}
+              >
+                <RecipeCard recipe={r} />
+              </motion.div>
             ))}
-          </div>
+            {loading && Array.from({ length: 8 }).map((_, i) => (
+              <SkeletonCard key={i} />
+            ))}
+          </motion.div>
         )}
 
         <div ref={loaderRef} className="h-10" />

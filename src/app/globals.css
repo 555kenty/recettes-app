@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;800&family=DM+Sans:wght@400;500;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -16,49 +16,67 @@
     direction: rtl;
   }
   body {
-    @apply bg-canvas-50 text-stone-900 font-sans;
+    @apply bg-canvas-50 text-warm-700 font-sans;
   }
 
   /* Scrollbar fine */
   ::-webkit-scrollbar { width: 4px; height: 4px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { @apply bg-stone-300 rounded-full; }
-  ::-webkit-scrollbar-thumb:hover { @apply bg-stone-400; }
+  ::-webkit-scrollbar-thumb { @apply bg-canvas-200 rounded-full; }
+  ::-webkit-scrollbar-thumb:hover { @apply bg-warm-700 rounded-full; }
 }
 
 @layer components {
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 px-6 py-3 bg-brand-500 text-white
-           rounded-full font-semibold text-sm tracking-wide
-           hover:bg-brand-600 active:scale-[0.98]
-           transition-all duration-150
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3
+           text-white rounded-xl font-semibold text-sm tracking-wide
+           active:scale-[0.98]
+           transition-all duration-200
            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2
            disabled:opacity-50 disabled:pointer-events-none;
+    background: linear-gradient(135deg, #C4583A, #9B3E25);
+    box-shadow: 0 4px 14px rgba(196, 88, 58, 0.35);
+  }
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(196, 88, 58, 0.45);
   }
   .btn-secondary {
-    @apply inline-flex items-center justify-center gap-2 px-6 py-3 bg-white text-stone-800
-           rounded-full font-semibold text-sm border border-canvas-200
-           hover:bg-canvas-50 active:scale-[0.98]
-           transition-all duration-150
-           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3
+           rounded-xl font-semibold text-sm border
+           active:scale-[0.98]
+           transition-all duration-200
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-canvas-200 focus-visible:ring-offset-2
            disabled:opacity-50 disabled:pointer-events-none;
+    background: transparent;
+    border-color: #F0E6DC;
+    color: #6B4226;
+  }
+  .btn-secondary:hover {
+    background: #FDF6EE;
+  }
+  .card {
+    background: #FFF8F0;
+    border: 1px solid #F0E6DC;
+    border-radius: 16px;
+    box-shadow: 0 1px 3px rgba(44, 24, 16, 0.06), 0 4px 12px rgba(44, 24, 16, 0.04);
   }
   .input-base {
-    @apply w-full px-4 py-3 bg-canvas-100 border border-canvas-200 rounded-xl text-stone-900
-           placeholder:text-stone-400 text-sm
+    @apply w-full px-4 py-3 bg-canvas-100 border border-canvas-200 rounded-xl text-warm-900
+           placeholder:text-warm-700/40 text-sm
            focus:outline-none focus:border-brand-500 focus:bg-white focus:ring-2 focus:ring-brand-500/10
            transition-all duration-150;
   }
   .card-base {
-    @apply bg-white rounded-2xl shadow-card border border-canvas-200/60;
+    @apply bg-canvas-100 rounded-2xl shadow-card border border-canvas-200;
   }
   .nav-item {
-    @apply flex items-center gap-3 px-4 py-2.5 rounded-xl text-stone-600 text-sm font-medium
-           hover:bg-canvas-100 hover:text-stone-900 transition-all duration-150
+    @apply flex items-center gap-3 px-4 py-2.5 rounded-xl text-warm-700 text-sm font-medium
+           hover:bg-canvas-100 hover:text-warm-900 transition-all duration-150
            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500;
   }
   .nav-item-active {
     @apply flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium
-           bg-stone-900 text-white;
+           bg-night text-white;
   }
 }

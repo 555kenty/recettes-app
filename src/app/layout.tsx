@@ -1,11 +1,23 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Playfair_Display, DM_Sans } from "next/font/google";
 import { cookies } from "next/headers";
 import type { Locale } from "@/i18n";
 import { getDirection } from "@/i18n/server";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
+const playfair = Playfair_Display({
+  subsets: ["latin"],
+  variable: "--font-playfair",
+  weight: ["400", "700", "800"],
+  display: "swap",
+});
+
+const dmSans = DM_Sans({
+  subsets: ["latin"],
+  variable: "--font-dm-sans",
+  weight: ["400", "500", "700", "800"],
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "CuisineConnect — Votre compagnon culinaire",
@@ -23,12 +35,12 @@ export default async function RootLayout({
   const langMap: Record<Locale, string> = { fr: 'fr', en: 'en', ar: 'ar' };
 
   return (
-    <html lang={langMap[locale]} className={inter.variable} data-dir={dir} data-locale={locale}>
+    <html lang={langMap[locale]} className={`${playfair.variable} ${dmSans.variable}`} data-dir={dir} data-locale={locale}>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
-      <body className="bg-canvas-50 text-stone-900 antialiased">
+      <body className={`${playfair.variable} ${dmSans.variable} font-sans antialiased bg-canvas-50 text-warm-700`}>
         {children}
       </body>
     </html>
