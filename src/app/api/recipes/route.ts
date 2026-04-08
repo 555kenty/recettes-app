@@ -14,6 +14,29 @@ export async function GET(req: NextRequest) {
   const skip = (page - 1) * limit;
 
   const community = searchParams.get('community') === 'true';
+  const mine = searchParams.get('mine') === 'true';
+
+  // ?mine=true : retourne uniquement les recettes de l'utilisateur connecté
+  if (mine) {
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const myRecipes = await prisma.recipe.findMany({
+      where: { authorId: session.user.id },
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        title: true,
+        imageUrl: true,
+        timeMinutes: true,
+        difficulty: true,
+        cuisineType: true,
+        isPublic: true,
+        createdAt: true,
+      },
+    });
+    return NextResponse.json({ recipes: myRecipes });
+  }
 
   const where: Record<string, unknown> = { isPublic: true };
 

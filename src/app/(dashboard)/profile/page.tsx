@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import {
   Plus, Globe, ArrowRight, LogOut, Loader2, Heart, Clock, ChefHat,
-  Save, CheckCircle2,
+  Save, CheckCircle2, Pencil, Trash2, Lock, Unlock,
 } from 'lucide-react';
 import { useSession, signOut } from '@/lib/auth-client';
 
@@ -46,6 +46,17 @@ interface LikedRecipe {
   likeCount: number;
 }
 
+interface MyRecipe {
+  id: string;
+  title: string;
+  imageUrl: string | null;
+  timeMinutes: number | null;
+  difficulty: string | null;
+  cuisineType: string | null;
+  isPublic: boolean;
+  createdAt: string;
+}
+
 // ─── Page ──────────────────────────────────────────────────────────────────
 
 export default function ProfilePage() {
@@ -57,6 +68,9 @@ export default function ProfilePage() {
   const [shoppingCount, setShoppingCount] = useState(0);
   const [likedRecipes, setLikedRecipes] = useState<LikedRecipe[]>([]);
   const [likedLoading, setLikedLoading] = useState(true);
+  const [myRecipes, setMyRecipes] = useState<MyRecipe[]>([]);
+  const [myRecipesLoading, setMyRecipesLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [profileForm, setProfileForm] = useState<ProfileForm>({
     age: '', weight: '', height: '', gender: '', activityLevel: '',
   });
@@ -138,10 +152,35 @@ export default function ProfilePage() {
     setLikedLoading(false);
   }, [session]);
 
+  const loadMyRecipes = useCallback(async () => {
+    if (!session) return;
+    setMyRecipesLoading(true);
+    try {
+      const res = await fetch('/api/recipes?mine=true');
+      if (res.ok) {
+        const { recipes } = await res.json();
+        setMyRecipes(recipes);
+      }
+    } catch {}
+    setMyRecipesLoading(false);
+  }, [session]);
+
+  const deleteRecipe = async (id: string) => {
+    if (!confirm('Supprimer cette recette définitivement ?')) return;
+    setDeletingId(id);
+    try {
+      const res = await fetch(`/api/recipes/${id}`, { method: 'DELETE' });
+      if (res.ok) setMyRecipes((prev) => prev.filter((r) => r.id !== id));
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   useEffect(() => {
     loadProfileData();
     loadLikedRecipes();
-  }, [loadProfileData, loadLikedRecipes]);
+    loadMyRecipes();
+  }, [loadProfileData, loadLikedRecipes, loadMyRecipes]);
 
   // ── Render ───────────────────────────────────────────────────────────────
 
@@ -173,7 +212,7 @@ export default function ProfilePage() {
         <div className="grid grid-cols-3 gap-3 mb-5">
           {[
             { label: 'Ingrédients', value: pantryCount },
-            { label: 'Courses', value: shoppingCount },
+            { label: 'Recettes', value: myRecipes.length },
             { label: 'Likes', value: likedRecipes.length },
           ].map((s) => (
             <div key={s.label} className="bg-white rounded-2xl p-5 text-center border border-canvas-200 shadow-card">
@@ -276,6 +315,77 @@ export default function ProfilePage() {
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : saved ? <CheckCircle2 className="w-4 h-4" /> : <Save className="w-4 h-4" />}
             {saved ? 'Sauvegardé !' : 'Sauvegarder'}
           </button>
+        </div>
+
+        {/* Mes recettes créées */}
+        <div className="mb-8">
+          <h2 className="font-serif text-xl font-bold text-stone-900 mb-4 flex items-center gap-2">
+            <ChefHat className="w-5 h-5 text-brand-500" /> Mes recettes
+          </h2>
+
+          {myRecipesLoading ? (
+            <div className="flex justify-center py-10">
+              <Loader2 className="w-5 h-5 text-brand-500 animate-spin" />
+            </div>
+          ) : myRecipes.length === 0 ? (
+            <div className="bg-white rounded-2xl border border-canvas-200 shadow-card p-8 text-center">
+              <ChefHat className="w-8 h-8 text-stone-200 mx-auto mb-3" />
+              <p className="text-stone-500 text-sm">Vous n'avez encore créé aucune recette.</p>
+              <Link href="/recipes/new" className="inline-block mt-3 text-brand-500 hover:text-brand-600 text-sm font-medium">
+                Créer une recette →
+              </Link>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {myRecipes.map((recipe) => (
+                <div key={recipe.id} className="bg-white rounded-2xl border border-canvas-200 shadow-card flex items-center gap-4 p-3 hover:border-brand-200 transition-all">
+                  <div className="w-16 h-16 rounded-xl overflow-hidden bg-stone-100 flex-shrink-0">
+                    {recipe.imageUrl ? (
+                      <img src={recipe.imageUrl} alt={recipe.title} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <ChefHat className="w-6 h-6 text-stone-300" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-stone-900 text-sm leading-snug line-clamp-1">{recipe.title}</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      {recipe.cuisineType && <span className="text-[10px] font-semibold text-brand-500 uppercase tracking-wider">{recipe.cuisineType}</span>}
+                      {recipe.timeMinutes && (
+                        <span className="flex items-center gap-0.5 text-xs text-stone-400">
+                          <Clock className="w-3 h-3" />{recipe.timeMinutes} min
+                        </span>
+                      )}
+                      <span className="flex items-center gap-0.5 text-xs text-stone-400">
+                        {recipe.isPublic ? <Unlock className="w-3 h-3" /> : <Lock className="w-3 h-3" />}
+                        {recipe.isPublic ? 'Publique' : 'Privée'}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <Link
+                      href={`/recipes/${recipe.id}`}
+                      className="w-8 h-8 rounded-lg bg-brand-50 hover:bg-brand-100 flex items-center justify-center transition-colors"
+                      title="Modifier"
+                    >
+                      <Pencil className="w-3.5 h-3.5 text-brand-600" />
+                    </Link>
+                    <button
+                      onClick={() => deleteRecipe(recipe.id)}
+                      disabled={deletingId === recipe.id}
+                      className="w-8 h-8 rounded-lg bg-red-50 hover:bg-red-100 flex items-center justify-center transition-colors"
+                      title="Supprimer"
+                    >
+                      {deletingId === recipe.id
+                        ? <Loader2 className="w-3.5 h-3.5 text-red-500 animate-spin" />
+                        : <Trash2 className="w-3.5 h-3.5 text-red-500" />}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Mes Likes */}
