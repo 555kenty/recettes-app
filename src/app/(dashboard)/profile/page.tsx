@@ -365,7 +365,7 @@ export default function ProfilePage() {
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
                     <Link
-                      href={`/recipes/${recipe.id}`}
+                      href={`/recipes/${recipe.id}/edit`}
                       className="w-8 h-8 rounded-lg bg-brand-50 hover:bg-brand-100 flex items-center justify-center transition-colors"
                       title="Modifier"
                     >

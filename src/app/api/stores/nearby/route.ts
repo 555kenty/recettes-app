@@ -20,14 +20,8 @@ export async function GET(req: NextRequest) {
   const categories = 'commercial.supermarket,commercial.grocery,commercial.food_and_drink';
   const url = `https://api.geoapify.com/v2/places?categories=${categories}&filter=circle:${lon},${lat},${radius}&limit=20&apiKey=${apiKey}`;
 
-  const res = await fetch(url);
-  if (!res.ok) {
-    return NextResponse.json({ error: 'Geoapify error' }, { status: 502 });
-  }
-
-  const data = await res.json();
-
-  const stores = (data.features ?? []).map((f: {
+  let res: Response;
+  interface GeoapifyFeature {
     properties: {
       name?: string;
       categories?: string[];
@@ -40,7 +34,23 @@ export async function GET(req: NextRequest) {
       place_id?: string;
     };
     geometry?: { coordinates?: [number, number] };
-  }) => ({
+  }
+  let data: { features?: GeoapifyFeature[]; message?: string; error?: string };
+  try {
+    res = await fetch(url);
+    data = await res.json();
+  } catch (err) {
+    return NextResponse.json({ error: 'Fetch failed', detail: String(err) }, { status: 502 });
+  }
+
+  if (!res.ok) {
+    return NextResponse.json(
+      { error: 'Geoapify error', status: res.status, detail: data?.message ?? data?.error ?? 'unknown' },
+      { status: 502 },
+    );
+  }
+
+  const stores = (data.features ?? []).map((f) => ({
     id: f.properties.place_id,
     name: f.properties.name ?? 'Magasin',
     category: f.properties.categories?.[0] ?? 'supermarket',
