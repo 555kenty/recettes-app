@@ -147,6 +147,7 @@ Three locales supported: `fr` (default), `en`, `ar`. Locale is stored in a `loca
 | `PUT /api/shopping-list/[id]` | Update list (items checked state etc.) |
 | `DELETE /api/shopping-list/[id]` | Delete list |
 | `GET /api/nutrition/daily` | Today's macro intake aggregated from `UserHistory` + TDEE targets |
+| `GET /api/nutrition/history?month=YYYY-MM` | `UserHistory` entries grouped by day for the given month (auth required) |
 | `GET /api/users/[id]` | Public user profile |
 | `PUT /api/users/[id]` | Update profile fields including `age`, `weight`, `height`, `gender`, `activityLevel` |
 | `POST /api/users/[id]/follow` | Follow/unfollow user (auth required) |
@@ -193,4 +194,5 @@ See `TASKS.md` for the full phased roadmap. Phases 1–5 are complete. Phase 6 (
 
 - `scripts/import-spoonacular-cultural.js` and `scripts/scrape-gemini.js` exist; `scripts/generate-cultural-recipes.js` still to create.
 - Target cuisines: Antillaise/Créole, West African, Maghrebi, Réunionnaise, Middle Eastern, Southeast Asian.
-- Remaining open items: OAuth callback URL configuration, embeddings still in progress (~94+ done out of ~596), UI cuisine filter cards to verify once recipes are imported.
+- UI cuisine filter cards (horizontal scroll, emoji/image cards, `ring-brand-500` active state) are done in `RecipeBrowser.tsx`.
+- Remaining open items: OAuth callback URL configuration, embeddings still in progress, recipe import scripts for cultural cuisines.
