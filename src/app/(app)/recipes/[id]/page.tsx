@@ -13,6 +13,84 @@ import { useSession } from '@/lib/auth-client';
 import { StoresNearby } from '@/app/components/StoresNearby';
 import type { NutritionResult } from '@/lib/nutrition';
 
+// ─── Emoji helper ────────────────────────────────────────────────────────────
+
+function getIngredientEmoji(name: string, category?: string): string {
+  const n = (name ?? '').toLowerCase();
+  if (category === 'Viandes')  return '🍗';
+  if (category === 'Légumes')  return '🥕';
+  if (category === 'Fruits')   return '🍋';
+  if (category === 'Poissons') return '🐟';
+  if (category === 'Laitiers') return '🥛';
+  if (category === 'Épices')   return '🧂';
+
+  // Viandes & protéines
+  if (/poulet|volaille|blanc.*poulet|cuisse.*poulet/.test(n)) return '🍗';
+  if (/boeuf|veau|steak|viande hach/.test(n)) return '🥩';
+  if (/agneau|mouton/.test(n)) return '🫕';
+  if (/porc|jambon|lardon|bacon|saucisse|merguez/.test(n)) return '🥓';
+  if (/crevette|homard|crabe|fruits.de.mer/.test(n)) return '🦐';
+  if (/thon|saumon|cabillaud|tilapia|poisson/.test(n)) return '🐟';
+  if (/\boeuf|\boeufs/.test(n)) return '🥚';
+
+  // Légumes
+  if (/tomat/.test(n)) return '🍅';
+  if (/oignon|échalote/.test(n)) return '🧅';
+  if (/\bail\b/.test(n)) return '🧄';
+  if (/carotte/.test(n)) return '🥕';
+  if (/poivron|piment/.test(n)) return '🫑';
+  if (/aubergine/.test(n)) return '🍆';
+  if (/courgette/.test(n)) return '🥒';
+  if (/brocoli|chou-fleur|chou/.test(n)) return '🥦';
+  if (/champignon/.test(n)) return '🍄';
+  if (/épinard/.test(n)) return '🥬';
+  if (/salade|laitue/.test(n)) return '🥗';
+  if (/pomme.de.terre|patate/.test(n)) return '🥔';
+  if (/maïs/.test(n)) return '🌽';
+  if (/avocat/.test(n)) return '🥑';
+  if (/concombre/.test(n)) return '🥒';
+
+  // Fruits
+  if (/citron/.test(n)) return '🍋';
+  if (/orange/.test(n)) return '🍊';
+  if (/pomme/.test(n)) return '🍎';
+  if (/banane/.test(n)) return '🍌';
+  if (/mangue/.test(n)) return '🥭';
+  if (/ananas/.test(n)) return '🍍';
+  if (/fraise/.test(n)) return '🍓';
+
+  // Laitiers
+  if (/beurre/.test(n)) return '🧈';
+  if (/\blait\b/.test(n)) return '🥛';
+  if (/fromage|mozzarella|parmesan|cheddar|gruyère/.test(n)) return '🧀';
+  if (/crème/.test(n)) return '🍦';
+  if (/yaourt/.test(n)) return '🥛';
+
+  // Féculents & céréales
+  if (/\briz\b/.test(n)) return '🍚';
+  if (/pâte|spaghetti|tagliatelle|nouille/.test(n)) return '🍝';
+  if (/pain/.test(n)) return '🍞';
+  if (/farine/.test(n)) return '🌾';
+  if (/couscous|semoule/.test(n)) return '🫘';
+  if (/lentille|pois chiche|haricot/.test(n)) return '🫘';
+
+  // Condiments & épices
+  if (/\bsel\b/.test(n)) return '🧂';
+  if (/poivre|cumin|curcuma|curry|cannelle|paprika|coriandre|thym|romarin|basilic|persil|colombo/.test(n)) return '🌶️';
+  if (/huile/.test(n)) return '🫙';
+  if (/sauce|vinaigre/.test(n)) return '🍶';
+  if (/sucre/.test(n)) return '🍬';
+  if (/miel/.test(n)) return '🍯';
+  if (/chocolat/.test(n)) return '🍫';
+
+  // Liquides & bouillons
+  if (/\beau\b|eau froide|eau chaude/.test(n)) return '💧';
+  if (/bouillon|fond.de/.test(n)) return '🍲';
+  if (/vin/.test(n)) return '🍷';
+
+  return '🫙';
+}
+
 // ─── Types ──────────────────────────────────────────────────────────────────
 
 interface Step {
@@ -527,13 +605,7 @@ export default function RecipePage({ params }: { params: { id: string } }) {
                       className="flex items-center gap-3 bg-canvas-100 border border-canvas-200 rounded-xl px-3 py-2.5"
                     >
                       <span className="text-base">
-                        {ing.category === 'Viandes' ? '🍗'
-                          : ing.category === 'Légumes' ? '🥕'
-                          : ing.category === 'Fruits' ? '🍋'
-                          : ing.category === 'Poissons' ? '🐟'
-                          : ing.category === 'Laitiers' ? '🥛'
-                          : ing.category === 'Épices' ? '🧄'
-                          : '🫙'}
+                        {getIngredientEmoji(ing.name, ing.category)}
                       </span>
                       <span className="flex-1 text-sm font-medium text-night capitalize">
                         {ing.name}
