@@ -2,9 +2,12 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 import {
   Plus, X, Loader2, Leaf, Apple, Fish, Milk, FlaskConical, ChefHat,
+  Lightbulb, ArrowRight, Heart, Activity,
 } from 'lucide-react';
+import { useSession } from '@/lib/auth-client';
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -20,6 +23,27 @@ interface IngredientSuggestion {
   category: string | null;
 }
 
+interface NutritionDaily {
+  calories: number;
+  proteins: number;
+  fats: number;
+  carbs: number;
+  targets: { calories: number; proteins: number; fats: number; carbs: number };
+  tdee: number;
+  goal: string | null;
+  imc?: number | null;
+  imcStatus?: string | null;
+}
+
+interface RecipeSuggestion {
+  id: string;
+  title: string;
+  imageUrl?: string | null;
+  cuisineType?: string | null;
+  calories?: number | null;
+  matchScore: number;
+}
+
 // ─── Constantes ────────────────────────────────────────────────────────────
 
 const CATEGORIES = [
@@ -32,9 +56,64 @@ const CATEGORIES = [
   { id: 'Autre',    icon: Leaf,          color: 'bg-stone-100 text-stone-600' },
 ];
 
+const CATEGORY_EMOJI: Record<string, string> = {
+  Viandes: '🍗',
+  Légumes: '🥕',
+  Fruits: '🍋',
+  Poissons: '🐟',
+  Laitiers: '🥛',
+  Épices: '🧄',
+  Autre: '🫙',
+};
+
+function getImcStatus(imc: number): { label: string; color: string } {
+  if (imc < 18.5) return { label: 'MAIGREUR', color: 'bg-blue-100 text-blue-700' };
+  if (imc < 25)   return { label: 'NORMAL',   color: 'bg-olive-100 text-olive-700' };
+  if (imc < 30)   return { label: 'SURPOIDS', color: 'bg-honey-100 text-honey-700' };
+  return { label: 'OBÉSITÉ', color: 'bg-brand-100 text-brand-600' };
+}
+
+function MacroBar({
+  label,
+  value,
+  target,
+  unit,
+  barColor,
+}: {
+  label: string;
+  value: number;
+  target: number;
+  unit: string;
+  barColor: string;
+}) {
+  const pct = target > 0 ? Math.min(100, Math.round((value / target) * 100)) : 0;
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-1">
+        <span className="text-xs font-medium text-warm-700">{label}</span>
+        <span className="text-xs text-stone-500">
+          {Math.round(value)} / {Math.round(target)}{unit}
+        </span>
+      </div>
+      <div className="h-2 rounded-full bg-canvas-200 relative overflow-hidden">
+        <motion.div
+          className={`h-full rounded-full ${barColor}`}
+          initial={{ width: 0 }}
+          animate={{ width: `${pct}%` }}
+          transition={{ duration: 0.7, ease: 'easeOut' }}
+        />
+      </div>
+    </div>
+  );
+}
+
 // ─── Page ──────────────────────────────────────────────────────────────────
 
 export default function FridgePage() {
+  const router = useRouter();
+  const { data: session } = useSession();
+
+  // Pantry state
   const [pantry, setPantry] = useState<PantryEntry[]>([]);
   const [pantryLoading, setPantryLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
@@ -44,6 +123,12 @@ export default function FridgePage() {
   const [ingredientSuggestions, setIngredientSuggestions] = useState<IngredientSuggestion[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const autocompleteTimeout = useRef<NodeJS.Timeout | null>(null);
+
+  // Nutrition + suggestions state
+  const [nutrition, setNutrition] = useState<NutritionDaily | null>(null);
+  const [nutritionLoading, setNutritionLoading] = useState(true);
+  const [suggestions, setSuggestions] = useState<RecipeSuggestion[]>([]);
+  const [suggestionsLoading, setSuggestionsLoading] = useState(false);
 
   // ── Load pantry ──────────────────────────────────────────────────────────
 
@@ -57,9 +142,49 @@ export default function FridgePage() {
     setPantryLoading(false);
   }, []);
 
+  // ── Load nutrition ───────────────────────────────────────────────────────
+
+  const loadNutrition = useCallback(async () => {
+    setNutritionLoading(true);
+    try {
+      const res = await fetch('/api/nutrition/daily');
+      if (res.ok) {
+        const data = await res.json();
+        setNutrition(data);
+      }
+    } catch {}
+    setNutritionLoading(false);
+  }, []);
+
+  // ── Load suggestions ─────────────────────────────────────────────────────
+
+  const loadSuggestions = useCallback(async (pantryItems: string[]) => {
+    if (pantryItems.length === 0) return;
+    setSuggestionsLoading(true);
+    try {
+      const res = await fetch('/api/recipes/match', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pantryItems }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setSuggestions((data.recipes ?? []).slice(0, 3));
+      }
+    } catch {}
+    setSuggestionsLoading(false);
+  }, []);
+
   useEffect(() => {
     loadPantry();
-  }, [loadPantry]);
+    loadNutrition();
+  }, [loadPantry, loadNutrition]);
+
+  useEffect(() => {
+    if (!pantryLoading && pantry.length > 0) {
+      loadSuggestions(pantry.map((p) => p.ingredient.name));
+    }
+  }, [pantryLoading, pantry, loadSuggestions]);
 
   // ── Autocomplete ─────────────────────────────────────────────────────────
 
@@ -102,56 +227,346 @@ export default function FridgePage() {
     }
   };
 
+  // ── Computed values ───────────────────────────────────────────────────────
+
+  const firstName = session?.user?.name?.split(' ')[0] ?? 'Chef';
+
+  const imcValue = nutrition?.imc ?? null;
+  const imcStatus = imcValue ? getImcStatus(imcValue) : null;
+
+  const remainingKcal = nutrition
+    ? Math.max(0, nutrition.targets.calories - nutrition.calories)
+    : null;
+
+  const topSuggestion = suggestions[0] ?? null;
+
   // ── Render ───────────────────────────────────────────────────────────────
 
   return (
     <>
-      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
-        <div className="flex items-end justify-between mb-6">
-          <div>
-            <p className="text-xs font-semibold text-brand-500 uppercase tracking-wider mb-1">Mon Frigo</p>
-            <h2 className="font-serif text-2xl font-bold text-stone-900">
-              {pantryLoading ? '...' : `${pantry.length} ingrédient${pantry.length !== 1 ? 's' : ''}`}
-            </h2>
-          </div>
-          <button onClick={() => setShowAdd(true)} className="btn-primary">
-            <Plus className="w-4 h-4" /> Ajouter
-          </button>
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.25 }}
+        className="space-y-6 pb-10"
+      >
+        {/* ── Header de bienvenue ── */}
+        <div>
+          <h1 className="font-serif text-[28px] font-bold text-night leading-tight">
+            Bienvenue, {firstName}.
+          </h1>
+          <p className="text-stone-500 text-sm mt-1 font-sans">
+            Prêt à concocter votre prochain chef-d'œuvre nutritionnel ?
+          </p>
         </div>
 
-        {pantryLoading ? (
-          <div className="flex justify-center py-20"><Loader2 className="w-6 h-6 text-brand-500 animate-spin" /></div>
-        ) : pantry.length === 0 ? (
-          <div className="bg-white rounded-3xl p-12 text-center border border-canvas-200 shadow-card">
-            <div className="w-16 h-16 bg-canvas-100 rounded-2xl flex items-center justify-center mx-auto mb-5">
-              <ChefHat className="w-8 h-8 text-stone-300" />
+        {/* ── Card Profil Santé ── */}
+        <div className="bg-canvas-100 border border-canvas-200 rounded-2xl shadow-card p-5">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-8 h-8 rounded-xl bg-olive-100 flex items-center justify-center">
+              <Activity className="w-4 h-4 text-olive-500" />
             </div>
-            <h3 className="font-serif text-xl font-bold text-stone-900 mb-2">Votre frigo est vide</h3>
-            <p className="text-stone-500 text-sm mb-6">Ajoutez des ingrédients pour obtenir des suggestions de recettes.</p>
-            <button onClick={() => setShowAdd(true)} className="btn-primary">Ajouter un ingrédient</button>
+            <span className="text-[11px] font-bold tracking-widest uppercase text-olive-500">
+              Profil Santé
+            </span>
           </div>
-        ) : (
-          <div className="flex flex-wrap gap-2.5">
-            {pantry.map((item) => {
-              const cat = CATEGORIES.find((c) => c.id === item.ingredient.category) ?? CATEGORIES[CATEGORIES.length - 1];
-              const Icon = cat.icon;
-              return (
-                <div key={item.id} className="group flex items-center gap-2 bg-white border border-canvas-200 rounded-full pl-3 pr-2 py-2 shadow-card hover:shadow-hover transition-all">
-                  <div className={`w-5 h-5 ${cat.color} rounded-full flex items-center justify-center flex-shrink-0`}>
-                    <Icon className="w-2.5 h-2.5" />
-                  </div>
-                  <span className="text-sm font-medium text-stone-800 capitalize">{item.ingredient.name}</span>
+
+          {nutritionLoading ? (
+            <div className="space-y-2">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-6 bg-canvas-200 rounded-lg animate-pulse" />
+              ))}
+            </div>
+          ) : nutrition ? (
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                {imcValue ? (
+                  <>
+                    <div className="flex items-end gap-2">
+                      <span className="font-serif text-4xl font-bold text-night">
+                        {imcValue.toFixed(1)}
+                      </span>
+                      <span className="text-xs text-stone-400 mb-1">IMC</span>
+                    </div>
+                    {imcStatus && (
+                      <span className={`inline-block mt-1 px-2 py-0.5 rounded-full text-[11px] font-semibold ${imcStatus.color}`}>
+                        {imcStatus.label}
+                      </span>
+                    )}
+                  </>
+                ) : (
+                  <p className="text-sm text-stone-400 italic">IMC non disponible</p>
+                )}
+              </div>
+              <div className="text-right">
+                <p className="text-2xl font-bold text-night font-sans">
+                  {nutrition.tdee > 0 ? nutrition.tdee : '—'}{' '}
+                  <span className="text-sm text-stone-400 font-normal">kcal/j</span>
+                </p>
+                <p className="text-xs text-stone-400 mt-0.5">TDEE</p>
+                {nutrition.goal && (
+                  <p className="text-xs font-semibold text-brand-500 mt-2 capitalize">
+                    {nutrition.goal}
+                  </p>
+                )}
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-stone-400 italic">
+              Configurez votre profil pour voir vos données de santé.
+            </p>
+          )}
+        </div>
+
+        {/* ── Card Macros du jour ── */}
+        <div className="bg-canvas-100 border border-canvas-200 rounded-2xl shadow-card p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-xl bg-honey-100 flex items-center justify-center">
+                <Leaf className="w-4 h-4 text-honey-500" />
+              </div>
+              <span className="font-serif text-base font-bold text-night">Macros du jour</span>
+            </div>
+            <span className="text-[11px] text-stone-400">
+              {new Date().toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })}
+            </span>
+          </div>
+
+          {nutritionLoading ? (
+            <div className="space-y-3">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="h-7 bg-canvas-200 rounded-lg animate-pulse" />
+              ))}
+            </div>
+          ) : nutrition ? (
+            <div className="space-y-3">
+              <MacroBar
+                label="Calories"
+                value={nutrition.calories}
+                target={nutrition.targets.calories}
+                unit=" kcal"
+                barColor="bg-brand-500"
+              />
+              <MacroBar
+                label="Protéines"
+                value={nutrition.proteins}
+                target={nutrition.targets.proteins}
+                unit="g"
+                barColor="bg-olive-500"
+              />
+              <MacroBar
+                label="Lipides"
+                value={nutrition.fats}
+                target={nutrition.targets.fats}
+                unit="g"
+                barColor="bg-honey-500"
+              />
+              <MacroBar
+                label="Glucides"
+                value={nutrition.carbs}
+                target={nutrition.targets.carbs}
+                unit="g"
+                barColor="bg-warm-700"
+              />
+            </div>
+          ) : (
+            <p className="text-sm text-stone-400 italic">
+              Aucune donnée nutritionnelle pour aujourd'hui.
+            </p>
+          )}
+        </div>
+
+        {/* ── Card Conseil du Chef IA ── */}
+        {(nutrition || topSuggestion) && (
+          <div className="bg-brand-500/5 border border-brand-500/20 rounded-2xl p-5">
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 rounded-xl bg-brand-500/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <Lightbulb className="w-4 h-4 text-brand-500" />
+              </div>
+              <div className="flex-1">
+                <p className="text-xs font-bold uppercase tracking-widest text-brand-500 mb-1">
+                  Conseil du Chef
+                </p>
+                <p className="text-sm text-warm-700 leading-relaxed">
+                  {remainingKcal !== null && topSuggestion ? (
+                    <>
+                      Il vous reste{' '}
+                      <span className="font-semibold text-brand-500">{remainingKcal} kcal</span>{' '}
+                      pour aujourd'hui —{' '}
+                      <span className="font-medium">{topSuggestion.title}</span> serait parfaite
+                      pour équilibrer vos apports !
+                    </>
+                  ) : remainingKcal !== null ? (
+                    <>
+                      Il vous reste{' '}
+                      <span className="font-semibold text-brand-500">{remainingKcal} kcal</span>{' '}
+                      pour aujourd'hui. Ajoutez des ingrédients à votre frigo pour obtenir des
+                      suggestions personnalisées.
+                    </>
+                  ) : topSuggestion ? (
+                    <>
+                      Basé sur votre frigo,{' '}
+                      <span className="font-medium">{topSuggestion.title}</span> correspond
+                      parfaitement à vos ingrédients !
+                    </>
+                  ) : (
+                    'Ajoutez des ingrédients à votre frigo pour recevoir des conseils personnalisés.'
+                  )}
+                </p>
+                {topSuggestion && (
                   <button
-                    onClick={() => removeFromPantry(item.id)}
-                    className="w-5 h-5 flex items-center justify-center rounded-full text-stone-300 hover:text-red-500 hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100"
+                    onClick={() => router.push(`/recipes/${topSuggestion.id}`)}
+                    className="mt-3 inline-flex items-center gap-1.5 bg-gradient-to-br from-brand-500 to-brand-600 text-white rounded-xl px-3 py-2 text-xs font-semibold shadow-md hover:-translate-y-0.5 transition-all duration-200"
                   >
-                    <X className="w-3 h-3" />
+                    Voir la recette <ArrowRight className="w-3 h-3" />
                   </button>
-                </div>
-              );
-            })}
+                )}
+              </div>
+            </div>
           </div>
         )}
+
+        {/* ── Section Mon Frigo ── */}
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="font-serif text-xl font-bold text-night">Mon Frigo</h2>
+            <button
+              onClick={() => setShowAdd(true)}
+              className="flex items-center gap-1 text-brand-500 text-xs font-semibold hover:text-brand-600 transition-colors"
+            >
+              <Plus className="w-3.5 h-3.5" /> Gérer
+            </button>
+          </div>
+
+          {pantryLoading ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="w-5 h-5 text-brand-500 animate-spin" />
+            </div>
+          ) : pantry.length === 0 ? (
+            <div className="bg-canvas-100 border border-canvas-200 rounded-2xl p-8 text-center shadow-card">
+              <div className="w-12 h-12 bg-canvas-200 rounded-xl flex items-center justify-center mx-auto mb-4">
+                <ChefHat className="w-6 h-6 text-stone-300" />
+              </div>
+              <p className="text-stone-500 text-sm mb-4">Votre frigo est vide</p>
+              <button
+                onClick={() => setShowAdd(true)}
+                className="bg-gradient-to-br from-brand-500 to-brand-600 text-white rounded-xl px-4 py-2.5 text-sm font-semibold shadow-md hover:-translate-y-0.5 transition-all duration-200"
+              >
+                Ajouter un ingrédient
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-3 gap-2">
+              {pantry.map((item) => {
+                const emoji = CATEGORY_EMOJI[item.ingredient.category ?? 'Autre'] ?? '🫙';
+                return (
+                  <div
+                    key={item.id}
+                    className="group bg-canvas-100 border border-canvas-200 rounded-xl p-2 text-center relative"
+                  >
+                    <span className="text-lg block mb-0.5">{emoji}</span>
+                    <p className="text-[11px] font-medium text-warm-700 capitalize leading-tight truncate">
+                      {item.ingredient.name}
+                    </p>
+                    {item.quantity && (
+                      <p className="text-[10px] text-stone-400 truncate">{item.quantity}</p>
+                    )}
+                    <button
+                      onClick={() => removeFromPantry(item.id)}
+                      className="absolute top-1 right-1 w-4 h-4 flex items-center justify-center rounded-full text-stone-300 hover:text-red-500 hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100"
+                    >
+                      <X className="w-2.5 h-2.5" />
+                    </button>
+                  </div>
+                );
+              })}
+              {/* Quick add tile */}
+              <button
+                onClick={() => setShowAdd(true)}
+                className="bg-canvas-50 border border-dashed border-canvas-200 rounded-xl p-2 text-center hover:border-brand-300 hover:bg-brand-500/5 transition-all"
+              >
+                <span className="text-lg block mb-0.5 text-stone-300">+</span>
+                <p className="text-[11px] text-stone-400">Ajouter</p>
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* ── Section Suggestions ── */}
+        <div>
+          <div className="flex items-center gap-2 mb-3">
+            <h2 className="font-serif text-xl font-bold text-night">Suggestions</h2>
+            <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 bg-olive-100 text-olive-500 rounded-full">
+              Basé sur votre frigo
+            </span>
+          </div>
+
+          {suggestionsLoading ? (
+            <div className="space-y-3">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-16 bg-canvas-100 rounded-xl animate-pulse border border-canvas-200" />
+              ))}
+            </div>
+          ) : suggestions.length === 0 ? (
+            <div className="bg-canvas-100 border border-canvas-200 rounded-2xl p-6 text-center shadow-card">
+              <p className="text-stone-400 text-sm">
+                {pantry.length === 0
+                  ? 'Ajoutez des ingrédients pour obtenir des suggestions.'
+                  : 'Aucune suggestion disponible pour le moment.'}
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-2.5">
+              {suggestions.map((recipe) => {
+                const score = Math.round(recipe.matchScore * 100);
+                const scoreColor =
+                  score >= 80
+                    ? 'bg-olive-500 text-white'
+                    : score >= 60
+                    ? 'bg-honey-500 text-white'
+                    : 'bg-brand-500 text-white';
+                return (
+                  <motion.button
+                    key={recipe.id}
+                    onClick={() => router.push(`/recipes/${recipe.id}`)}
+                    className="w-full flex items-center gap-3 bg-canvas-100 border border-canvas-200 rounded-xl p-3 hover:shadow-card transition-all text-left"
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    {/* Image ou emoji */}
+                    {recipe.imageUrl ? (
+                      <img
+                        src={recipe.imageUrl}
+                        alt={recipe.title}
+                        className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-canvas-200 flex items-center justify-center flex-shrink-0">
+                        <span className="text-lg">🍽️</span>
+                      </div>
+                    )}
+
+                    {/* Info */}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-night truncate">{recipe.title}</p>
+                      <p className="text-[11px] text-stone-400 truncate">
+                        {[recipe.cuisineType, recipe.calories ? `${recipe.calories} kcal` : null]
+                          .filter(Boolean)
+                          .join(' • ')}
+                      </p>
+                    </div>
+
+                    {/* Score badge */}
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-[11px] font-bold ${scoreColor}`}>
+                      {score}%
+                    </div>
+
+                    <ArrowRight className="w-4 h-4 text-stone-300 flex-shrink-0" />
+                  </motion.button>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </motion.div>
 
       {/* ── Modal ajout frigo ── */}
@@ -236,7 +651,7 @@ export default function FridgePage() {
               <button
                 onClick={() => addToPantry(newItemName)}
                 disabled={!newItemName.trim()}
-                className="btn-primary w-full py-3.5 text-base"
+                className="bg-gradient-to-br from-brand-500 to-brand-600 text-white rounded-xl px-4 py-3 font-semibold shadow-md hover:-translate-y-0.5 transition-all duration-200 w-full text-base disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
               >
                 Ajouter au frigo
               </button>
