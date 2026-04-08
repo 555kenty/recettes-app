@@ -65,8 +65,9 @@ export function StoresNearby({ missingIngredients = [] }: StoresNearbyProps) {
 
   const CATEGORY_LABELS: Record<string, string> = {
     'commercial.supermarket': 'Supermarché',
-    'commercial.grocery': 'Épicerie',
     'commercial.food_and_drink': 'Alimentation',
+    'commercial.convenience': 'Épicerie',
+    'commercial.marketplace': 'Marché',
   };
 
   return (

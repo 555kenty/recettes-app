@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'GEOAPIFY_API_KEY not configured' }, { status: 503 });
   }
 
-  const categories = 'commercial.supermarket,commercial.grocery,commercial.food_and_drink';
+  const categories = 'commercial.supermarket,commercial.food_and_drink,commercial.convenience,commercial.marketplace';
   const url = `https://api.geoapify.com/v2/places?categories=${categories}&filter=circle:${lon},${lat},${radius}&limit=20&apiKey=${apiKey}`;
 
   let res: Response;
