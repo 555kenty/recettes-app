@@ -485,6 +485,23 @@ function ChartTooltipContent({ active, payload, targetKcal }: ChartTooltipProps)
   );
 }
 
+// ─── Bar color: blue → green (at target) → red (over) ────────────────────────
+
+function getBarColor(kcal: number, target: number): string {
+  if (kcal === 0 || target === 0) return '#e2e8f0';
+  const pct = kcal / target;
+  if (pct <= 1) {
+    // 0 % → blue (#3b82f6, hsl 217°)  |  100 % → green (#22c55e, hsl 142°)
+    const hue = Math.round(217 - (217 - 142) * pct);
+    return `hsl(${hue}, 65%, 55%)`;
+  } else {
+    // 100 % → green  |  130 %+ → red (hsl 0°)
+    const excess = Math.min((pct - 1) / 0.3, 1);
+    const hue = Math.round(142 * (1 - excess));
+    return `hsl(${hue}, 70%, 52%)`;
+  }
+}
+
 // ─── NutritionCalendar ────────────────────────────────────────────────────────
 
 interface CalDay {
@@ -975,8 +992,8 @@ export default function NutritionPage() {
                     {chartDays.map((entry) => (
                       <Cell
                         key={entry.date}
-                        fill={entry.kcal > targetKcal ? '#ef4444' : '#C4583A'}
-                        fillOpacity={entry.kcal > 0 ? 0.85 : 0.15}
+                        fill={getBarColor(entry.kcal, targetKcal)}
+                        fillOpacity={entry.kcal > 0 ? 0.9 : 0.2}
                       />
                     ))}
                   </Bar>
@@ -985,17 +1002,21 @@ export default function NutritionPage() {
             </div>
 
             {/* Legend */}
-            <div className="flex items-center gap-4 mt-3 text-xs text-stone-400">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-3 text-xs text-stone-400">
               <div className="flex items-center gap-1.5">
-                <div className="w-6 h-0.5 border-b-2 border-dashed border-brand-500" />
+                <div className="w-6 h-0.5 border-b-2 border-dashed border-stone-400" />
                 <span>Objectif ({targetKcal} kcal)</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <div className="w-3 h-3 rounded-sm bg-brand-500 opacity-85" />
-                <span>Sous l&apos;objectif</span>
+                <div className="w-3 h-3 rounded-sm" style={{ background: 'hsl(217,65%,55%)' }} />
+                <span>Loin de l&apos;objectif</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <div className="w-3 h-3 rounded-sm bg-red-500" />
+                <div className="w-3 h-3 rounded-sm" style={{ background: 'hsl(142,65%,55%)' }} />
+                <span>Dans l&apos;objectif</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-3 h-3 rounded-sm" style={{ background: 'hsl(0,70%,52%)' }} />
                 <span>Au-dessus</span>
               </div>
             </div>
