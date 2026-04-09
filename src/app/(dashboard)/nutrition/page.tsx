@@ -98,8 +98,10 @@ function MacroBar({ macro, consumed, target }: { macro: typeof MACROS[number]; c
 
 // ─── AddMealModal ─────────────────────────────────────────────────────────────
 
-function AddMealModal({ onClose, onAdded }: { onClose: () => void; onAdded: () => void }) {
+function AddMealModal({ onClose, onAdded, initialDate }: { onClose: () => void; onAdded: (date: string) => void; initialDate?: string }) {
+  const todayStr = new Date().toISOString().split('T')[0];
   const [tab, setTab] = useState<'recipe' | 'custom'>('recipe');
+  const [targetDate, setTargetDate] = useState(initialDate ?? todayStr);
 
   // ── Recipe tab state
   const [search, setSearch]                     = useState('');
@@ -150,7 +152,7 @@ function AddMealModal({ onClose, onAdded }: { onClose: () => void; onAdded: () =
         await fetch('/api/meal-logs', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ recipeId: selected.id, servings: parseInt(servings) || 1 }),
+          body: JSON.stringify({ recipeId: selected.id, servings: parseFloat(servings) || 1, date: targetDate }),
         });
       } else {
         if (!customName.trim()) return;
@@ -168,11 +170,12 @@ function AddMealModal({ onClose, onAdded }: { onClose: () => void; onAdded: () =
             name: customName.trim(),
             imageUrl,
             ingredients: customIngredients.filter((i) => i.name.trim()),
-            servings: parseInt(customServings) || 1,
+            servings: parseFloat(customServings) || 1,
+            date: targetDate,
           }),
         });
       }
-      onAdded();
+      onAdded(targetDate);
       onClose();
     } finally {
       setSaving(false);
@@ -200,8 +203,20 @@ function AddMealModal({ onClose, onAdded }: { onClose: () => void; onAdded: () =
           </button>
         </div>
 
+        {/* Date selector */}
+        <div className="px-5 pt-3 pb-1 flex-shrink-0">
+          <label className="block text-xs font-medium text-stone-500 mb-1.5">Date du repas</label>
+          <input
+            type="date"
+            value={targetDate}
+            max={todayStr}
+            onChange={(e) => setTargetDate(e.target.value)}
+            className="w-full px-3 py-2 rounded-xl border border-canvas-200 focus:border-brand-400 focus:outline-none text-sm"
+          />
+        </div>
+
         {/* Tabs */}
-        <div className="flex gap-1 px-5 pt-4 flex-shrink-0">
+        <div className="flex gap-1 px-5 pt-3 flex-shrink-0">
           {(['recipe', 'custom'] as const).map((t) => (
             <button
               key={t}
@@ -394,7 +409,7 @@ function AddMealModal({ onClose, onAdded }: { onClose: () => void; onAdded: () =
 
 interface CalDay { id: string; name: string; imageUrl: string | null; kcal: number; loggedAt: string }
 
-function NutritionCalendar() {
+function NutritionCalendar({ onAddForDay }: { onAddForDay: (date: string) => void }) {
   const now = new Date();
   const [year, setYear]           = useState(now.getFullYear());
   const [month, setMonth]         = useState(now.getMonth() + 1);
@@ -488,9 +503,17 @@ function NutritionCalendar() {
             <p className="text-sm font-semibold text-stone-800">
               {new Date(selectedDay + 'T12:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
             </p>
-            {totalKcal > 0 && (
-              <span className="text-xs font-bold text-brand-500 bg-brand-50 px-2 py-0.5 rounded-full">~{totalKcal} kcal</span>
-            )}
+            <div className="flex items-center gap-2">
+              {totalKcal > 0 && (
+                <span className="text-xs font-bold text-brand-500 bg-brand-50 px-2 py-0.5 rounded-full">~{totalKcal} kcal</span>
+              )}
+              <button
+                onClick={() => onAddForDay(selectedDay)}
+                className="flex items-center gap-1 text-xs font-semibold text-brand-500 hover:text-brand-600 bg-brand-50 hover:bg-brand-100 px-2 py-1 rounded-lg transition-colors"
+              >
+                <Plus className="w-3 h-3" /> Ajouter
+              </button>
+            </div>
           </div>
 
           {selectedEntries.length === 0 ? (
@@ -528,7 +551,9 @@ export default function NutritionPage() {
   const [saving, setSaving]                     = useState(false);
   const [saved, setSaved]                       = useState(false);
   const [showModal, setShowModal]               = useState(false);
+  const [modalDate, setModalDate]               = useState<string | undefined>(undefined);
   const [deletingId, setDeletingId]             = useState<string | null>(null);
+  const [calKey, setCalKey]                     = useState(0); // increment to force calendar reload
 
   const fetchDaily = useCallback(async () => {
     const res = await fetch('/api/nutrition/daily');
@@ -577,11 +602,19 @@ export default function NutritionPage() {
     } finally { setSaving(false); }
   };
 
+  const openModal = (date?: string) => { setModalDate(date); setShowModal(true); };
+
+  const handleAdded = (date: string) => {
+    const todayStr = new Date().toISOString().split('T')[0];
+    fetchDaily(); // always refresh today's totals
+    if (date !== todayStr) setCalKey((k) => k + 1); // force calendar reload for past days
+  };
+
   const deleteLog = async (id: string) => {
     setDeletingId(id);
     try {
       const res = await fetch(`/api/meal-logs/${id}`, { method: 'DELETE' });
-      if (res.ok) fetchDaily();
+      if (res.ok) { fetchDaily(); setCalKey((k) => k + 1); }
     } finally { setDeletingId(null); }
   };
 
@@ -597,7 +630,11 @@ export default function NutritionPage() {
     <div className="space-y-8">
       <AnimatePresence>
         {showModal && (
-          <AddMealModal onClose={() => setShowModal(false)} onAdded={fetchDaily} />
+          <AddMealModal
+            onClose={() => setShowModal(false)}
+            onAdded={handleAdded}
+            initialDate={modalDate}
+          />
         )}
       </AnimatePresence>
 
@@ -717,7 +754,7 @@ export default function NutritionPage() {
             <div className="flex items-center justify-between mb-1">
               <h2 className="font-serif text-lg font-bold text-stone-900">Aujourd&apos;hui</h2>
               <button
-                onClick={() => setShowModal(true)}
+                onClick={() => openModal()}
                 className="flex items-center gap-1.5 bg-brand-500 hover:bg-brand-600 text-white text-xs font-semibold px-3 py-1.5 rounded-xl transition-colors"
               >
                 <Plus className="w-3.5 h-3.5" /> Ajouter
@@ -732,7 +769,7 @@ export default function NutritionPage() {
                 </div>
                 <p className="text-stone-500 text-sm font-medium">Aucun repas enregistré</p>
                 <p className="text-stone-400 text-xs mt-1">Ajoutez vos repas pour suivre vos apports</p>
-                <button onClick={() => setShowModal(true)} className="mt-3 text-xs text-brand-500 hover:text-brand-600 font-medium">
+                <button onClick={() => openModal()} className="mt-3 text-xs text-brand-500 hover:text-brand-600 font-medium">
                   + Ajouter un repas
                 </button>
               </div>
@@ -782,7 +819,7 @@ export default function NutritionPage() {
 
       {/* Calendar */}
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.25 }}>
-        <NutritionCalendar />
+        <NutritionCalendar key={calKey} onAddForDay={(date) => openModal(date)} />
       </motion.div>
     </div>
   );

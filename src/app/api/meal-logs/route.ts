@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const dateParam = req.nextUrl.searchParams.get('date'); // YYYY-MM-DD
+  const dateParam = req.nextUrl.searchParams.get('date');
   let start: Date;
   let end: Date;
 
@@ -31,56 +31,70 @@ export async function GET(req: NextRequest) {
 }
 
 // POST /api/meal-logs
-// Body option A (existing recipe): { recipeId: string, servings?: number }
-// Body option B (custom meal):     { name: string, ingredients: [], servings?: number, imageUrl?: string }
+// Body option A (existing recipe): { recipeId, servings?, date? }
+// Body option B (custom meal):     { name, ingredients?, servings?, imageUrl?, date? }
+// date: YYYY-MM-DD — defaults to today if omitted
 export async function POST(req: NextRequest) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const body = await req.json();
 
+  // Resolve loggedAt from optional date param (defaults to now)
+  let loggedAt = new Date();
+  if (body.date && /^\d{4}-\d{2}-\d{2}$/.test(body.date)) {
+    const [y, m, d] = body.date.split('-').map(Number);
+    // Use noon so timezone shifts don't accidentally land on wrong day
+    loggedAt = new Date(y, m - 1, d, 12, 0, 0, 0);
+  }
+
   let name: string;
   let imageUrl: string | null = null;
   let ingredients: RecipeIngredient[] = [];
-  let servings = body.servings ?? 1;
+  let servings = Math.max(0.5, parseFloat(body.servings) || 1);
   let recipeId: string | null = null;
   let kcal = 0, proteins = 0, fats = 0, carbs = 0;
 
   if (body.recipeId) {
-    // ── Mode recette existante ────────────────────────────────────────────────
+    // ── Mode recette existante ──────────────────────────────────────────────
     const recipe = await prisma.recipe.findUnique({
       where: { id: body.recipeId },
       select: { id: true, title: true, imageUrl: true, ingredients: true, servings: true },
     });
     if (!recipe) return NextResponse.json({ error: 'Recipe not found' }, { status: 404 });
 
-    recipeId = recipe.id;
-    name = recipe.title;
-    imageUrl = recipe.imageUrl ?? null;
+    recipeId    = recipe.id;
+    name        = recipe.title;
+    imageUrl    = recipe.imageUrl ?? null;
     ingredients = (recipe.ingredients as RecipeIngredient[] | null) ?? [];
-    servings = body.servings ?? recipe.servings ?? 1;
+
+    // recipeServings = default portions for the whole recipe (e.g. 4)
+    // servings       = how many portions the user ate
+    const recipeServings = Math.max(1, recipe.servings ?? 1);
+    const requestedServings = servings;
 
     try {
-      const nutrition = await computeNutrition(ingredients, servings);
-      kcal     = Math.round(nutrition.perServing.kcal     * servings);
-      proteins = Math.round(nutrition.perServing.proteins * servings * 10) / 10;
-      fats     = Math.round(nutrition.perServing.fats     * servings * 10) / 10;
-      carbs    = Math.round(nutrition.perServing.carbs    * servings * 10) / 10;
-    } catch { /* macros stay 0 if computation fails */ }
+      // Compute nutrition based on recipe's own serving count → correct perServing
+      const nutrition = await computeNutrition(ingredients, recipeServings);
+      kcal     = Math.round(nutrition.perServing.kcal     * requestedServings);
+      proteins = Math.round(nutrition.perServing.proteins * requestedServings * 10) / 10;
+      fats     = Math.round(nutrition.perServing.fats     * requestedServings * 10) / 10;
+      carbs    = Math.round(nutrition.perServing.carbs    * requestedServings * 10) / 10;
+    } catch { /* macros stay 0 */ }
   } else {
-    // ── Mode repas maison ─────────────────────────────────────────────────────
+    // ── Mode repas maison ───────────────────────────────────────────────────
     if (!body.name?.trim()) return NextResponse.json({ error: 'name is required' }, { status: 400 });
     name        = body.name.trim();
     imageUrl    = body.imageUrl ?? null;
     ingredients = body.ingredients ?? [];
-    servings    = body.servings ?? 1;
 
     try {
-      const nutrition = await computeNutrition(ingredients, servings);
-      kcal     = Math.round(nutrition.kcal);
-      proteins = Math.round(nutrition.proteins * 10) / 10;
-      fats     = Math.round(nutrition.fats * 10) / 10;
-      carbs    = Math.round(nutrition.carbs * 10) / 10;
+      // Ingredients represent 1 serving → scale by requested servings
+      const nutrition = await computeNutrition(ingredients, 1);
+      kcal     = Math.round(nutrition.kcal     * servings);
+      proteins = Math.round(nutrition.proteins * servings * 10) / 10;
+      fats     = Math.round(nutrition.fats     * servings * 10) / 10;
+      carbs    = Math.round(nutrition.carbs    * servings * 10) / 10;
     } catch { /* macros stay 0 */ }
   }
 
@@ -96,6 +110,7 @@ export async function POST(req: NextRequest) {
       proteins,
       fats,
       carbs,
+      loggedAt,
     },
   });
 
