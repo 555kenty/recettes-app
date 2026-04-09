@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { useSession } from '@/lib/auth-client';
 import { useToast, ToastContainer } from '@/app/components/Toast';
+import { getIngredientEmoji } from '@/lib/ingredient-emoji';
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -57,15 +58,6 @@ const CATEGORIES = [
   { id: 'Autre',    icon: Leaf,          color: 'bg-stone-100 text-stone-600' },
 ];
 
-const CATEGORY_EMOJI: Record<string, string> = {
-  Viandes: '🍗',
-  Légumes: '🥕',
-  Fruits: '🍋',
-  Poissons: '🐟',
-  Laitiers: '🥛',
-  Épices: '🧄',
-  Autre: '🫙',
-};
 
 function getImcStatus(imc: number): { label: string; color: string } {
   if (imc < 18.5) return { label: 'MAIGREUR', color: 'bg-blue-100 text-blue-700' };
@@ -491,7 +483,7 @@ export default function FridgePage() {
           ) : (
             <div className="grid grid-cols-3 gap-2">
               {pantry.map((item) => {
-                const emoji = CATEGORY_EMOJI[item.ingredient.category ?? 'Autre'] ?? '🫙';
+                const emoji = getIngredientEmoji(item.ingredient.name, item.ingredient.category);
                 return (
                   <div
                     key={item.id}
