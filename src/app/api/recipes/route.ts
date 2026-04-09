@@ -3,6 +3,30 @@ import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
 
+// Maps UI label → all DB variants (case-insensitive match applied in query)
+const CUISINE_ALIASES: Record<string, string[]> = {
+  'Française':      ['Française', 'Francaise', 'French', 'France'],
+  'Italian':        ['Italian', 'Italienne', 'Italiana', 'Italy'],
+  'Spanish':        ['Spanish', 'Espagnole', 'Española', 'Spain'],
+  'British':        ['British', 'Britannique', 'English', 'UK'],
+  'Greek':          ['Greek', 'Grecque', 'Greece'],
+  'Moroccan':       ['Moroccan', 'Marocaine', 'Morocco'],
+  'Africaine':      ['Africaine', 'African', 'Africa'],
+  'Haïtienne':      ['Haïtienne', 'Haitienne', 'Haitian', 'Haiti'],
+  'Antillaise':     ['Antillaise', 'Caribbean', 'Creole', 'Créole'],
+  'Réunionnaise':   ['Réunionnaise', 'Reunionnaise', 'Reunion'],
+  'Japanese':       ['Japanese', 'Japonaise', 'Japan'],
+  'Chinese':        ['Chinese', 'Chinoise', 'China'],
+  'Indian':         ['Indian', 'Indienne', 'India'],
+  'Thai':           ['Thai', 'Thaï', 'Thaïlandaise', 'Thailand'],
+  'Korean':         ['Korean', 'Coréenne', 'Coreenne', 'Korea'],
+  'Vietnamese':     ['Vietnamese', 'Vietnamienne', 'Vietnam'],
+  'American':       ['American', 'Américaine', 'Americaine', 'USA'],
+  'Mexican':        ['Mexican', 'Mexicaine', 'Mexico'],
+  'Jamaican':       ['Jamaican', 'Jamaïcaine', 'Jamaicaine', 'Jamaica'],
+  'Middle Eastern': ['Middle Eastern', 'Moyen-Oriental', 'Moyen-Orient', 'Middle East'],
+};
+
 export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl;
   const search = searchParams.get('search') ?? '';
@@ -53,7 +77,10 @@ export async function GET(req: NextRequest) {
   if (search) {
     where.title = { contains: search, mode: 'insensitive' };
   }
-  if (cuisineType) where.cuisineType = cuisineType;
+  if (cuisineType) {
+    const aliases = CUISINE_ALIASES[cuisineType] ?? [cuisineType];
+    where.cuisineType = { in: aliases };
+  }
   if (category) where.category = category;
   if (difficulty) where.difficulty = difficulty;
 
