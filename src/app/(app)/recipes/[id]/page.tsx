@@ -249,9 +249,30 @@ export default function RecipePage({ params }: { params: { id: string } }) {
   const doneCount = doneSteps.size;
   const totalSteps = steps.length;
 
-  const pantryNames = new Set(pantry.map((p) => p.ingredient.name.toLowerCase().trim()));
+  const pantryList = pantry.map((p) =>
+    p.ingredient.name.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  );
 
-  const isInPantry = (name: string) => pantryNames.has(name.toLowerCase().trim());
+  // Word-prefix match: "Oignon" matches "Oignons", "Saucisses" matches "Saucisses Fumées",
+  // "Curcuma Ou Safran" splits on "ou" and checks each variant.
+  const isInPantry = (ingredientName: string): boolean => {
+    const norm = (s: string) => s.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const toWords = (s: string) => s.split(/[\s,]+/).filter((w) => w.length > 1);
+
+    // Handle "X ou Y" alternatives in recipe ingredient name
+    const variants = norm(ingredientName).split(/\s+ou\s+/);
+
+    return variants.some((variant) => {
+      const vWords = toWords(variant);
+      return pantryList.some((pantryName) => {
+        const pWords = toWords(pantryName);
+        // At least one word from variant is a prefix of a pantry word, or vice versa
+        return vWords.some((vw) =>
+          pWords.some((pw) => pw.startsWith(vw) || vw.startsWith(pw))
+        );
+      });
+    });
+  };
 
   // Nutrition per-serving computed values
   const perServing = nutrition?.perServing;
