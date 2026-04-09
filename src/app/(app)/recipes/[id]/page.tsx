@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { useSession } from '@/lib/auth-client';
 import { StoresNearby } from '@/app/components/StoresNearby';
+import { useToast, ToastContainer } from '@/app/components/Toast';
 import type { NutritionResult } from '@/lib/nutrition';
 
 // ─── Emoji helper ────────────────────────────────────────────────────────────
@@ -167,6 +168,7 @@ export default function RecipePage({ params }: { params: { id: string } }) {
   const { id } = params;
   const router = useRouter();
   const { data: session } = useSession();
+  const { toasts, showToast, dismiss } = useToast();
 
   const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
@@ -272,20 +274,18 @@ export default function RecipePage({ params }: { params: { id: string } }) {
     }
   };
 
-  const addToJournal = () => {
+  const addToJournal = async () => {
     if (!recipe) return;
-    const body = JSON.stringify({
-      name: `Journal — ${recipe.title}`,
-      items: (Array.isArray(recipe.ingredients) ? recipe.ingredients : []).map((i) => ({
-        name: `${i.name}${i.quantity ? ` — ${i.quantity}` : ''}`,
-        checked: false,
-      })),
-    });
-    fetch('/api/shopping-list', {
+    const res = await fetch('/api/meal-logs', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body,
+      body: JSON.stringify({ recipeId: recipe.id, servings: displayServings }),
     });
+    if (res.ok) {
+      showToast('Ajouté à votre journal nutritionnel !', 'success');
+    } else {
+      showToast('Erreur lors de l\'ajout au journal', 'error');
+    }
   };
 
   // ── Loading / error states ────────────────────────────────────────────────
@@ -354,6 +354,7 @@ export default function RecipePage({ params }: { params: { id: string } }) {
 
   return (
     <div className="min-h-screen bg-canvas-50">
+      <ToastContainer toasts={toasts} dismiss={dismiss} />
 
       {/* ── Hero Image ── */}
       <div className="relative w-full h-[260px] bg-stone-900 overflow-hidden">

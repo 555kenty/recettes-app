@@ -8,6 +8,7 @@ import {
   Lightbulb, ArrowRight, Heart, Activity,
 } from 'lucide-react';
 import { useSession } from '@/lib/auth-client';
+import { useToast, ToastContainer } from '@/app/components/Toast';
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -112,6 +113,7 @@ function MacroBar({
 export default function FridgePage() {
   const router = useRouter();
   const { data: session } = useSession();
+  const { toasts, showToast, dismiss } = useToast();
 
   // Pantry state
   const [pantry, setPantry] = useState<PantryEntry[]>([]);
@@ -247,10 +249,13 @@ export default function FridgePage() {
     }
   };
 
-  const removeFromPantry = async (id: string) => {
+  const removeFromPantry = async (id: string, name?: string) => {
     const res = await fetch(`/api/pantry/${id}`, { method: 'DELETE' });
     if (res.ok) {
       setPantry((prev) => prev.filter((p) => p.id !== id));
+      showToast(name ? `"${name}" retiré du frigo` : 'Ingrédient retiré', 'success');
+    } else {
+      showToast('Erreur lors de la suppression', 'error');
     }
   };
 
@@ -271,6 +276,7 @@ export default function FridgePage() {
 
   return (
     <>
+      <ToastContainer toasts={toasts} dismiss={dismiss} />
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
@@ -499,10 +505,10 @@ export default function FridgePage() {
                       <p className="text-[10px] text-stone-400 truncate">{item.quantity}</p>
                     )}
                     <button
-                      onClick={() => removeFromPantry(item.id)}
-                      className="absolute top-1 right-1 w-4 h-4 flex items-center justify-center rounded-full text-stone-300 hover:text-red-500 hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100"
+                      onClick={() => removeFromPantry(item.id, item.ingredient.name)}
+                      className="absolute top-1 right-1 w-5 h-5 flex items-center justify-center rounded-full text-stone-400 hover:text-red-500 hover:bg-red-50 transition-all sm:opacity-0 sm:group-hover:opacity-100"
                     >
-                      <X className="w-2.5 h-2.5" />
+                      <X className="w-3 h-3" />
                     </button>
                   </div>
                 );

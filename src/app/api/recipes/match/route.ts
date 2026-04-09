@@ -19,6 +19,19 @@ function expandItem(item: string, synonymMap: Map<string, string>): string[] {
   return canonical ? [item, canonical] : [item];
 }
 
+// Word-boundary match: checks if any word in `needle` appears (as prefix) in any word of `haystack`
+// e.g. "riz" matches "riz complet" but NOT "friz" or "prix"
+// e.g. "tomate" matches "sauce tomate" and "tomates" but NOT "tomatillo"
+function wordMatch(haystack: string, needle: string): boolean {
+  const hWords = haystack.split(/[\s,()]+/).filter((w) => w.length > 1);
+  const nWords = needle.split(/[\s,()]+/).filter((w) => w.length > 1);
+  if (nWords.length === 0) return false;
+  // All needle words must appear (as prefix) in at least one haystack word
+  return nWords.every((nw) =>
+    hWords.some((hw) => hw.startsWith(nw) || nw.startsWith(hw))
+  );
+}
+
 // POST { pantryItems: string[] } → recettes matchées triées par score
 export async function POST(req: NextRequest) {
   const body = await req.json();
@@ -64,7 +77,7 @@ export async function POST(req: NextRequest) {
       const matched = rawItems.filter((item) => {
         const expanded = expandItem(item, synonymMap);
         return recipeIngredients.some((ri) =>
-          expanded.some((e) => ri.includes(e) || e.includes(ri))
+          expanded.some((e) => wordMatch(ri, e) || wordMatch(e, ri))
         );
       });
 
@@ -72,7 +85,7 @@ export async function POST(req: NextRequest) {
       const missing = recipeIngredients.filter((ri) => {
         return !rawItems.some((item) => {
           const expanded = expandItem(item, synonymMap);
-          return expanded.some((e) => ri.includes(e) || e.includes(ri));
+          return expanded.some((e) => wordMatch(ri, e) || wordMatch(e, ri));
         });
       });
 

@@ -134,7 +134,7 @@ export default function ShoppingPage() {
                 <span className="text-stone-800 text-sm flex-1">{item.name}</span>
                 <button
                   onClick={() => saveShoppingList(shoppingItems.filter((_, idx) => idx !== realIdx))}
-                  className="text-stone-300 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
+                  className="text-stone-300 hover:text-red-400 transition-colors sm:opacity-0 sm:group-hover:opacity-100"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -157,7 +157,7 @@ export default function ShoppingPage() {
                 <span className="text-stone-500 text-sm line-through flex-1">{item.name}</span>
                 <button
                   onClick={() => saveShoppingList(shoppingItems.filter((_, idx) => idx !== realIdx))}
-                  className="text-stone-300 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
+                  className="text-stone-300 hover:text-red-400 transition-colors sm:opacity-0 sm:group-hover:opacity-100"
                 >
                   <X className="w-4 h-4" />
                 </button>
