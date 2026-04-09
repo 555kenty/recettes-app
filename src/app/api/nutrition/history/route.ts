@@ -3,6 +3,17 @@ import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
 
+interface HistoryEntry {
+  id: string;
+  name: string;
+  imageUrl: string | null;
+  kcal: number;
+  proteins: number;
+  fats: number;
+  carbs: number;
+  loggedAt: string;
+}
+
 // GET /api/nutrition/history?month=YYYY-MM
 // Returns meal logs grouped by day for the given month
 export async function GET(req: NextRequest) {
@@ -31,7 +42,7 @@ export async function GET(req: NextRequest) {
   });
 
   // Group by day (YYYY-MM-DD)
-  const days: Record<string, { id: string; name: string; imageUrl: string | null; kcal: number; loggedAt: string }[]> = {};
+  const days: Record<string, HistoryEntry[]> = {};
 
   for (const log of logs) {
     const day = log.loggedAt.toISOString().split('T')[0];
@@ -41,6 +52,9 @@ export async function GET(req: NextRequest) {
       name:     log.name,
       imageUrl: log.imageUrl,
       kcal:     log.kcal,
+      proteins: log.proteins,
+      fats:     log.fats,
+      carbs:    log.carbs,
       loggedAt: log.loggedAt.toISOString(),
     });
   }
