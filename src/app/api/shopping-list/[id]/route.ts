@@ -8,7 +8,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { id } = await params;
-  const { name, items } = await req.json();
+  const { items } = await req.json();
 
   const list = await prisma.shoppingList.findUnique({ where: { id } });
   if (!list) return NextResponse.json({ error: 'Not found' }, { status: 404 });
@@ -16,7 +16,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
   const updated = await prisma.shoppingList.update({
     where: { id },
-    data: { name, items },
+    data: { items: items as object },
   });
 
   return NextResponse.json({ list: updated });

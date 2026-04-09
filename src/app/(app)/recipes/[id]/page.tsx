@@ -633,19 +633,22 @@ export default function RecipePage({ params }: { params: { id: string } }) {
               </div>
 
               <button
-                onClick={() => {
-                  const body = JSON.stringify({
-                    name: 'Ma liste',
-                    items: ingredients.map((i) => ({
-                      name: `${i.name}${i.quantity ? ` — ${i.quantity}` : ''}`,
-                      checked: false,
-                    })),
-                  });
-                  fetch('/api/shopping-list', {
+                onClick={async () => {
+                  const res = await fetch('/api/shopping-list', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body,
+                    body: JSON.stringify({
+                      recipeId: recipe.id,
+                      recipeTitle: recipe.title,
+                      recipeImageUrl: recipe.imageUrl ?? null,
+                      ingredients: ingredients.map((i) => ({
+                        name: i.name,
+                        quantity: [i.quantity, i.unit].filter(Boolean).join(' '),
+                      })),
+                    }),
                   });
+                  if (res.ok) showToast('Recette ajoutée à la liste de courses !', 'success');
+                  else showToast('Erreur lors de l\'ajout aux courses', 'error');
                 }}
                 className="mt-3 flex items-center gap-2 text-sm text-stone-400 hover:text-brand-500 transition-colors font-medium"
               >
