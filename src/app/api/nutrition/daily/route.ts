@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
-import { computeNutrition, type RecipeIngredient } from '@/lib/nutrition';
 import { computeTDEE } from '@/lib/tdee';
 
 export async function GET(_req: NextRequest) {
@@ -11,64 +10,22 @@ export async function GET(_req: NextRequest) {
 
   const userId = session.user.id;
 
-  const todayStart = new Date();
-  todayStart.setHours(0, 0, 0, 0);
-  const todayEnd = new Date();
-  todayEnd.setHours(23, 59, 59, 999);
+  const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
+  const todayEnd   = new Date(); todayEnd.setHours(23, 59, 59, 999);
 
-  // Fetch today's history with recipe data
-  const historyEntries = await prisma.userHistory.findMany({
-    where: { userId, viewedAt: { gte: todayStart, lte: todayEnd } },
-    include: {
-      recipe: {
-        select: {
-          id: true,
-          title: true,
-          imageUrl: true,
-          ingredients: true,
-          servings: true,
-        },
-      },
-    },
-    orderBy: { viewedAt: 'desc' },
+  // Fetch today's meal logs
+  const logs = await prisma.mealLog.findMany({
+    where: { userId, loggedAt: { gte: todayStart, lte: todayEnd } },
+    orderBy: { loggedAt: 'desc' },
   });
 
-  // Deduplicate by recipeId (keep latest view)
-  const seen = new Set<string>();
-  const unique = historyEntries.filter((h) => {
-    if (seen.has(h.recipeId)) return false;
-    seen.add(h.recipeId);
-    return true;
-  });
-
-  // Compute nutrition per recipe (parallel, errors silenced)
-  const historyWithNutrition = await Promise.all(
-    unique.map(async (h) => {
-      const ingredients = (h.recipe.ingredients as RecipeIngredient[] | null) ?? [];
-      const servings = h.recipe.servings ?? 1;
-      let nutrition = {
-        kcal: 0, proteins: 0, fats: 0, carbs: 0,
-        perServing: { kcal: 0, proteins: 0, fats: 0, carbs: 0 },
-        matchedCount: 0,
-      };
-      try { nutrition = await computeNutrition(ingredients, servings); } catch {}
-      return {
-        recipeId: h.recipeId,
-        recipeName: h.recipe.title,
-        recipeImage: h.recipe.imageUrl,
-        consumedAt: h.viewedAt,
-        nutrition,
-      };
-    }),
-  );
-
-  // Sum consumed macros (1 serving per recipe)
-  const consumed = historyWithNutrition.reduce(
-    (acc, h) => ({
-      kcal: acc.kcal + h.nutrition.perServing.kcal,
-      proteins: acc.proteins + h.nutrition.perServing.proteins,
-      fats: acc.fats + h.nutrition.perServing.fats,
-      carbs: acc.carbs + h.nutrition.perServing.carbs,
+  // Sum consumed macros
+  const consumed = logs.reduce(
+    (acc, l) => ({
+      kcal:     acc.kcal     + l.kcal,
+      proteins: acc.proteins + l.proteins,
+      fats:     acc.fats     + l.fats,
+      carbs:    acc.carbs    + l.carbs,
     }),
     { kcal: 0, proteins: 0, fats: 0, carbs: 0 },
   );
@@ -76,24 +33,30 @@ export async function GET(_req: NextRequest) {
   // Get user profile for TDEE
   const profile = await prisma.userProfile.findUnique({ where: { id: userId } });
   const tdee = computeTDEE({
-    age: (profile as { age?: number | null } | null)?.age ?? null,
-    weight: (profile as { weight?: number | null } | null)?.weight ?? null,
-    height: (profile as { height?: number | null } | null)?.height ?? null,
-    gender: (profile as { gender?: string | null } | null)?.gender ?? null,
+    age:           (profile as { age?: number | null }           | null)?.age           ?? null,
+    weight:        (profile as { weight?: number | null }        | null)?.weight        ?? null,
+    height:        (profile as { height?: number | null }        | null)?.height        ?? null,
+    gender:        (profile as { gender?: string | null }        | null)?.gender        ?? null,
     activityLevel: (profile as { activityLevel?: string | null } | null)?.activityLevel ?? null,
-    goal: profile?.goal ?? null,
+    goal:          profile?.goal ?? null,
   });
 
   return NextResponse.json({
     consumed: {
-      kcal: Math.round(consumed.kcal),
+      kcal:     Math.round(consumed.kcal),
       proteins: Math.round(consumed.proteins * 10) / 10,
-      fats: Math.round(consumed.fats * 10) / 10,
-      carbs: Math.round(consumed.carbs * 10) / 10,
+      fats:     Math.round(consumed.fats     * 10) / 10,
+      carbs:    Math.round(consumed.carbs    * 10) / 10,
     },
-    target: { kcal: tdee.tdee, proteins: tdee.protein, fats: tdee.fat, carbs: tdee.carbs },
+    target:        { kcal: tdee.tdee, proteins: tdee.protein, fats: tdee.fat, carbs: tdee.carbs },
     tdeeBreakdown: { proteinKcal: tdee.proteinKcal, fatKcal: tdee.fatKcal, carbsKcal: tdee.carbsKcal },
-    history: historyWithNutrition,
-    profileComplete: !!(profile && (profile as { age?: number | null }).age && (profile as { weight?: number | null }).weight && (profile as { height?: number | null }).height && (profile as { gender?: string | null }).gender),
+    logs,
+    profileComplete: !!(
+      profile &&
+      (profile as { age?: number | null }).age &&
+      (profile as { weight?: number | null }).weight &&
+      (profile as { height?: number | null }).height &&
+      (profile as { gender?: string | null }).gender
+    ),
   });
 }
