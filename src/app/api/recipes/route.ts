@@ -40,9 +40,14 @@ export async function GET(req: NextRequest) {
 
   const where: Record<string, unknown> = { isPublic: true };
 
-  // Feed communautaire : exclure les imports en masse (TheMealDB etc.)
+  // Feed communautaire : uniquement les recettes crées par des utilisateurs
+  // (sourceApi = null) ou importées via vidéo (sourceApi = 'video')
+  // Exclure les imports en masse : themealdb, spoonacular, ai-generated
   if (community) {
-    where.sourceApi = { not: 'themealdb' };
+    where.OR = [
+      { sourceApi: null },
+      { sourceApi: 'video' },
+    ];
   }
 
   if (search) {
